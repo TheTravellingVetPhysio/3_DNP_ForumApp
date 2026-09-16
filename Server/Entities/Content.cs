@@ -2,7 +2,7 @@ using System;
 
 namespace Entities;
 
-public class Content
+public abstract class Content
 {
     public int ContentId { get; set; }
     public required string Body { get; set; }

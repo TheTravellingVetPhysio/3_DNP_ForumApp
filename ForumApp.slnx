@@ -1,4 +1,7 @@
 <Solution>
-  <Folder Name="Server">
+  <Folder Name="/Server/">
+    <Project Path="Server/Entities/Entities.csproj" />
+    <Project Path="Server/InMemoryRepository/InMemoryRepository.csproj" />
+    <Project Path="Server/RepositoryContracts/RepositoryContracts.csproj" />
   </Folder>
 </Solution>
