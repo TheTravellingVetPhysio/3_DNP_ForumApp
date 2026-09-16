@@ -1,10 +1,10 @@
 namespace RepositoryContracts;
 
-public interface IRepository<TEntity>
+public interface IRepository<T>
 {
-    Task<TEntity> AddAsync(TEntity entity);
-    Task UpdateAsync(TEntity entity);
+    Task<T> AddAsync(T entity);
+    Task UpdateAsync(T entity);
     Task DeleteAsync(int id);
-    Task<TEntity> GetSingleAsync(int id);
-    IQueryable<TEntity> GetManyAsync();
+    Task<T> GetSingleAsync(int id);
+    IQueryable<T> GetManyAsync();
 }
