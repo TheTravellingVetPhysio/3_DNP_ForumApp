@@ -9,33 +9,50 @@ public static class DataSeeder
         IUserRepository userRepository,
         IPostRepository postRepository,
         ICommentRepository commentRepository,
-        IReactionRepository reactionRepository)
+        IReactionRepository reactionRepository,
+        ISubforumRepository subforumRepository)
     {
         // Users
         User alice = await userRepository.AddAsync(new User { Username = "alice", Password = "password123" });
         User bob = await userRepository.AddAsync(new User { Username = "bob", Password = "hunter2" });
         User charlie = await userRepository.AddAsync(new User { Username = "charlie", Password = "qwerty" });
 
+        // Subforums
+        Subforum generalForum = await subforumRepository.AddAsync(new Subforum
+        {
+            Name = "Generelt",
+            UserId = alice.UserId
+        });
+
+        Subforum dotnetForum = await subforumRepository.AddAsync(new Subforum
+        {
+            Name = "Dotnet & C#",
+            UserId = bob.UserId
+        });
+
         // Posts
         Post welcomePost = await postRepository.AddAsync(new Post
         {
             Title = "Velkommen til ForumApp",
             Body = "Dette er det allerførste indlæg på forummet. Sig hej!",
-            UserId = alice.UserId
+            UserId = alice.UserId,
+            SubforumId = generalForum.SubforumId
         });
 
         Post dotnetPost = await postRepository.AddAsync(new Post
         {
             Title = "Hvad synes I om .NET?",
             Body = "Jeg er lige startet med C# og .NET, og jeg er ret imponeret indtil videre.",
-            UserId = bob.UserId
+            UserId = bob.UserId,
+            SubforumId = dotnetForum.SubforumId
         });
 
         Post csharpTipsPost = await postRepository.AddAsync(new Post
         {
             Title = "Mine bedste C# tips",
             Body = "Her er nogle ting, jeg gerne ville have vidst tidligere...",
-            UserId = charlie.UserId
+            UserId = charlie.UserId,
+            SubforumId = dotnetForum.SubforumId
         });
 
         // Comments
