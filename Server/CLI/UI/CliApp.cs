@@ -24,6 +24,6 @@ public class CliApp
 
     public async Task RunAsync()
     {
-        
+        // Lave menu + funktioner til at navigere rundt i consol applikationen, bla, bla, bla.
     }
 }
