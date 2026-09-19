@@ -12,6 +12,7 @@ public class UserService
         this.userRepository = userRepository;
     }
 
+    // CRUD
     public async Task<User> CreateUserAsync(string username, string password)
     {
         if (string.IsNullOrWhiteSpace(username))

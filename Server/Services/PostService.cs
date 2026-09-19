@@ -2,6 +2,7 @@ namespace Services;
 
 using Entities;
 using RepositoryContracts;
+using Services.Models;
 
 public class PostService
 {
@@ -9,17 +10,23 @@ public class PostService
     private readonly IUserRepository userRepository;
     private readonly ISubforumRepository subforumRepository;
     private readonly ICommentRepository commentRepository;
+    private readonly IReactionRepository reactionRepository;
+    private readonly CommentService commentService;
 
     public PostService(
         IPostRepository postRepository,
         IUserRepository userRepository,
         ISubforumRepository subforumRepository,
-        ICommentRepository commentRepository)
+        ICommentRepository commentRepository,
+        IReactionRepository reactionRepository,
+        CommentService commentService)
     {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.subforumRepository = subforumRepository;
         this.commentRepository = commentRepository;
+        this.reactionRepository = reactionRepository;
+        this.commentService = commentService;
     }
 
     // CRUD
@@ -166,25 +173,12 @@ public class PostService
         Post post = await postRepository.GetSingleAsync(postId);
         User postUser = await userRepository.GetSingleAsync(post.UserId);
 
-        List<Comment> comments = commentRepository.GetManyAsync()
-            .Where(c => c.PostId == postId)
-            .OrderBy(c => c.Timestamp)
-            .ToList();
+        Dictionary<ReactionType, int> reactionCounts = reactionRepository.GetManyAsync()
+            .Where(r => r.ContentId == post.ContentId && r.ContentType == ContentType.Post)
+            .GroupBy(r => r.ReactionType)
+            .ToDictionary(g => g.Key, g => g.Count());
 
-        List<CommentDetailsDTO> commentDetailsDTOs = new();
-        foreach (Comment comment in comments)
-        {
-            User commentUser = await userRepository.GetSingleAsync(comment.UserId);
-            commentDetailsDTOs.Add(new CommentDetailsDTO
-            {
-                CommentId = comment.ContentId,
-                Body = comment.Body,
-                UserId = comment.UserId,
-                Username = commentUser.Username,
-                CreatedAt = comment.Timestamp,
-                ParentCommentId = comment.ParentCommentId
-            });
-        }
+        List<CommentDetailsDTO> commentDetailsDTOs = await commentService.GetCommentDetailsForPostAsync(postId);
 
         return new PostDetailsDTO
         {
@@ -194,6 +188,7 @@ public class PostService
             UserId = post.UserId,
             Username = postUser.Username,
             CreatedAt = post.Timestamp,
+            ReactionCounts = reactionCounts,
             Comments = commentDetailsDTOs
         };
     }

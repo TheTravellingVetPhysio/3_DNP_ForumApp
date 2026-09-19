@@ -5,20 +5,19 @@ using RepositoryContracts;
 
 public class CommentService
 {
-    private readonly ICommentRepository commentRepository;
-    private readonly IPostRepository postRepository;
-    private readonly IUserRepository userRepository;
-
     public CommentService(
         ICommentRepository commentRepository,
         IPostRepository postRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IReactionRepository reactionRepository)
     {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.reactionRepository = reactionRepository;
     }
 
+    // CRUD
     public async Task<Comment> CreateCommentAsync(string body, int userId, int postId, int? parentCommentId = null)
     {
         if (string.IsNullOrWhiteSpace(body))
@@ -29,7 +28,6 @@ public class CommentService
         await userRepository.GetSingleAsync(userId);
         await postRepository.GetSingleAsync(postId);
 
-        // Domænespecifikke regler
         if (parentCommentId is not null)
         {
             Comment parent = await commentRepository.GetSingleAsync(parentCommentId.Value);
@@ -65,5 +63,38 @@ public class CommentService
         comment.Body = newBody;
 
         await commentRepository.UpdateAsync(comment);
+    }
+
+    // Views
+    public async Task<List<CommentDetailsDTO>> GetCommentDetailsForPostAsync(int postId)
+    {
+        List<Comment> comments = commentRepository.GetManyAsync()
+            .Where(c => c.PostId == postId)
+            .OrderBy(c => c.Timestamp)
+            .ToList();
+
+        List<CommentDetailsDTO> result = new();
+        foreach (Comment comment in comments)
+        {
+            User commentUser = await userRepository.GetSingleAsync(comment.UserId);
+
+            Dictionary<ReactionType, int> reactionCounts = reactionRepository.GetManyAsync()
+                .Where(r => r.ContentId == comment.ContentId && r.ContentType == ContentType.Comment)
+                .GroupBy(r => r.ReactionType)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            result.Add(new CommentDetailsDTO
+            {
+                CommentId = comment.ContentId,
+                Body = comment.Body,
+                UserId = comment.UserId,
+                Username = commentUser.Username,
+                CreatedAt = comment.Timestamp,
+                ParentCommentId = comment.ParentCommentId,
+                ReactionCounts = reactionCounts
+            });
+        }
+
+        return result;
     }
 }

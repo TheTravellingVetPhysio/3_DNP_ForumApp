@@ -10,5 +10,6 @@ public class PostDetailsDTO
     public required int UserId { get; set; }
     public required string Username { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
+    public required Dictionary<ReactionType, int> ReactionCounts { get; set; }
     public required List<CommentDetailsDTO> Comments { get; set; }
 }

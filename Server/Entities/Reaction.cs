@@ -4,8 +4,9 @@ namespace Entities;
 
 public class Reaction
 {
-    public int ReactionId {get; set;}
-    public ReactionType ReactionType {get; set;}
+    public int ReactionId { get; set; }
+    public ReactionType ReactionType { get; set; }
     public int UserId { get; set; }
     public int ContentId { get; set; }
+    public required ContentType ContentType { get; set; }
 }
