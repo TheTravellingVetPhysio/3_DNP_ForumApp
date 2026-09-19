@@ -65,6 +65,9 @@ public class CommentService
         await commentRepository.UpdateAsync(comment);
     }
 
+    // Getters
+    
+
     // Views
     public async Task<List<CommentDetailsDTO>> GetCommentDetailsForPostAsync(int postId)
     {

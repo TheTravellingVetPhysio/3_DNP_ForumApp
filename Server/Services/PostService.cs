@@ -7,26 +7,23 @@ using Services.Models;
 public class PostService
 {
     private readonly IPostRepository postRepository;
-    private readonly IUserRepository userRepository;
-    private readonly ISubforumRepository subforumRepository;
-    private readonly ICommentRepository commentRepository;
-    private readonly IReactionRepository reactionRepository;
+    private readonly UserService userService;
+    private readonly SubforumService subforumService;
+    private readonly ReactionService reactionService;
     private readonly CommentService commentService;
 
     public PostService(
         IPostRepository postRepository,
-        IUserRepository userRepository,
-        ISubforumRepository subforumRepository,
-        ICommentRepository commentRepository,
-        IReactionRepository reactionRepository,
-        CommentService commentService)
+        UserService userService,
+        SubforumService subforumService,
+        CommentService commentService,
+        ReactionService reactionService)
     {
         this.postRepository = postRepository;
-        this.userRepository = userRepository;
-        this.subforumRepository = subforumRepository;
-        this.commentRepository = commentRepository;
-        this.reactionRepository = reactionRepository;
+        this.userService = userService;
+        this.subforumService = subforumService;
         this.commentService = commentService;
+        this.reactionService = reactionService;
     }
 
     // CRUD
@@ -42,8 +39,8 @@ public class PostService
             throw new ArgumentException("Indhold må ikke være tomt.");
         }
 
-        await userRepository.GetSingleAsync(userId);
-        await subforumRepository.GetSingleAsync(subforumId);
+        await userService.EnsureUserExistsAsync(userId);
+        await subforumService.EnsureSubforumExistsAsync(subforumId);
 
         Post post = new Post
         {
@@ -75,7 +72,24 @@ public class PostService
         await postRepository.UpdateAsync(post);
     }
 
+        public async Task<Post> DeletePostAsync(int postId)
+    {
+        Post post = GetPostByIdAsync(postId);
+
+        if (userService.GetPostCountByPostAsync(postId) == 0)
+        {
+            await postRepository.DeleteAsync(post);
+        }
+
+    }
+
     // Getters
+
+        public async Task<Post> GetPostByIdAsync(int postId)
+    {
+        return await postRepository.GetSingleAsync(postId);
+    }
+
     private IQueryable<Post> GetAllPostsQuery()
     {
         return postRepository.GetManyAsync();
@@ -91,6 +105,16 @@ public class PostService
         return postRepository.GetManyAsync().Where(p => p.SubforumId == subforumId);
     }
 
+        public Task<int> GetPostCountByUserAsync(int userId)
+    {
+        return Task.FromResult(GetPostsByUserQuery(userId).Count());
+    }
+
+        public Task<int> GetPostCountBySubforumAsync(int subforumId)
+    {
+        return Task.FromResult(GetPostsBySubforumQuery(subforumId).Count());
+    }
+
 
     // Views - husk at rette PostOverviewDTO alle steder ved ændringer...
     public Task<List<PostSummary>> ActivePostsInSubforumOverviewAsync(int subforumId)
@@ -100,10 +124,10 @@ public class PostService
 
         List<int> relevantPostIds = posts.Select(p => p.ContentId).ToList();
 
-        IQueryable<Comment> relevantComments = commentRepository.GetManyAsync()
+        IQueryable<Comment> relevantComments = commentService.GetManyAsync()
             .Where(c => relevantPostIds.Contains(c.PostId));
 
-        IQueryable<User> users = userRepository.GetManyAsync();
+        IQueryable<User> users = userService.GetManyAsync();
 
         List<PostSummary> summaries = posts
             .Select(p => new
@@ -173,10 +197,8 @@ public class PostService
         Post post = await postRepository.GetSingleAsync(postId);
         User postUser = await userRepository.GetSingleAsync(post.UserId);
 
-        Dictionary<ReactionType, int> reactionCounts = reactionRepository.GetManyAsync()
-            .Where(r => r.ContentId == post.ContentId && r.ContentType == ContentType.Post)
-            .GroupBy(r => r.ReactionType)
-            .ToDictionary(g => g.Key, g => g.Count());
+        Dictionary<ReactionType, int> reactionCounts =
+                await reactionService.GetReactionCountsAsync(post.ContentId, ContentType.Post);
 
         List<CommentDetailsDTO> commentDetailsDTOs = await commentService.GetCommentDetailsForPostAsync(postId);
 
@@ -191,12 +213,6 @@ public class PostService
             ReactionCounts = reactionCounts,
             Comments = commentDetailsDTOs
         };
-    }
-
-    // User "settings"
-    public Task<int> GetPostCountByUserAsync(int userId)
-    {
-        return Task.FromResult(GetPostsByUserQuery(userId).Count());
     }
 
 }

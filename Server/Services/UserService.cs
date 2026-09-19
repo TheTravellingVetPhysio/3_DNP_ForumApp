@@ -36,4 +36,15 @@ public class UserService
         User user = new User { Username = username, Password = password };
         return await userRepository.AddAsync(user);
     }
+
+    // Getters
+        public async Task<User> GetUserByIdAsync(int userId)
+    {
+        return await userRepository.GetSingleAsync(userId);
+    }
+
+    public async Task EnsureUserExistsAsync(int userId)
+    {
+        await userRepository.GetSingleAsync(userId);
+    }
 }
