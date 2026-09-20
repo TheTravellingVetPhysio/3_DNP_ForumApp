@@ -38,7 +38,12 @@ public class UserService
     }
 
     // Getters
-        public async Task<User> GetUserByIdAsync(int userId)
+    public Task<List<User>> GetAllUsersAsync()
+    {
+        return Task.FromResult(userRepository.GetManyAsync().ToList());
+    }
+    
+    public async Task<User> GetUserByIdAsync(int userId)
     {
         return await userRepository.GetSingleAsync(userId);
     }

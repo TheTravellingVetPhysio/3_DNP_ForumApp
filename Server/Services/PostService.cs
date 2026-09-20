@@ -72,62 +72,47 @@ public class PostService
         await postRepository.UpdateAsync(post);
     }
 
-        public async Task<Post> DeletePostAsync(int postId)
+    public async Task DeletePostAsync(int postId)
     {
-        Post post = GetPostByIdAsync(postId);
+        await postRepository.GetSingleAsync(postId);
 
-        if (userService.GetPostCountByPostAsync(postId) == 0)
+        int commentCount = await commentService.GetCommentCountByPostIdAsync(postId);
+
+        if (commentCount == 0)
         {
-            await postRepository.DeleteAsync(post);
+            await postRepository.DeleteAsync(postId);
+        }
+        else
+        {
+            throw new InvalidOperationException("Indlægget kan ikke slettes, da det indeholder kommentarer.");
         }
 
     }
 
     // Getters
-
-        public async Task<Post> GetPostByIdAsync(int postId)
+    public async Task<Post> GetPostByIdAsync(int postId)
     {
         return await postRepository.GetSingleAsync(postId);
     }
 
-    private IQueryable<Post> GetAllPostsQuery()
-    {
-        return postRepository.GetManyAsync();
-    }
-
-    private IQueryable<Post> GetPostsByUserQuery(int userId)
-    {
-        return postRepository.GetManyAsync().Where(p => p.UserId == userId);
-    }
-
-    private IQueryable<Post> GetPostsBySubforumQuery(int subforumId)
-    {
-        return postRepository.GetManyAsync().Where(p => p.SubforumId == subforumId);
-    }
-
-        public Task<int> GetPostCountByUserAsync(int userId)
+    public Task<int> GetPostCountByUserAsync(int userId)
     {
         return Task.FromResult(GetPostsByUserQuery(userId).Count());
     }
 
-        public Task<int> GetPostCountBySubforumAsync(int subforumId)
+    public Task<int> GetPostCountBySubforumAsync(int subforumId)
     {
         return Task.FromResult(GetPostsBySubforumQuery(subforumId).Count());
     }
 
 
     // Views - husk at rette PostOverviewDTO alle steder ved ændringer...
-    public Task<List<PostSummary>> ActivePostsInSubforumOverviewAsync(int subforumId)
+    public async Task<List<PostOverviewDTO>> ActivePostsInSubforumOverviewAsync(int subforumId)
     {
-        IQueryable<Post> posts = postRepository.GetManyAsync()
-            .Where(p => p.SubforumId == subforumId);
-
+        List<Post> posts = GetPostsBySubforumQuery(subforumId).ToList();
         List<int> relevantPostIds = posts.Select(p => p.ContentId).ToList();
-
-        IQueryable<Comment> relevantComments = commentService.GetManyAsync()
-            .Where(c => relevantPostIds.Contains(c.PostId));
-
-        IQueryable<User> users = userService.GetManyAsync();
+        List<Comment> relevantComments = await commentService.GetCommentsByPostIdsAsync(relevantPostIds);
+        List<User> users = await userService.GetAllUsersAsync();
 
         List<PostSummary> summaries = posts
             .Select(p => new
@@ -153,21 +138,18 @@ public class PostService
             })
             .ToList();
 
-        return Task.FromResult(summaries);
+        return summaries;
     }
 
-    public Task<List<PostSummary>> GetPostsOverviewByUserAsync(int userId)
+    public async Task<List<PostOverviewDTO>> GetPostsOverviewByUserAsync(int userId)
     {
-        IQueryable<Post> posts = GetPostsByUserQuery(userId);
-
+        List<Post> posts = GetPostsByUserQuery(userId).ToList();
         List<int> relevantPostIds = posts.Select(p => p.ContentId).ToList();
 
-        IQueryable<Comment> relevantComments = commentRepository.GetManyAsync()
-            .Where(c => relevantPostIds.Contains(c.PostId));
+        List<Comment> relevantComments = await commentService.GetCommentsByPostIdsAsync(relevantPostIds);
+        List<User> users = await userService.GetAllUsersAsync();
 
-        IQueryable<User> users = userRepository.GetManyAsync();
-
-        List<PostSummary> summaries = posts
+        List<PostOverviewDTO> summaries = posts
             .Select(p => new
             {
                 Post = p,
@@ -189,13 +171,13 @@ public class PostService
             })
             .ToList();
 
-        return Task.FromResult(summaries);
+        return summaries;
     }
 
     public async Task<PostDetailsDTO> GetPostDetailsAsync(int postId)
     {
         Post post = await postRepository.GetSingleAsync(postId);
-        User postUser = await userRepository.GetSingleAsync(post.UserId);
+        User postUser = await userService.GetSingleAsync(post.UserId);
 
         Dictionary<ReactionType, int> reactionCounts =
                 await reactionService.GetReactionCountsAsync(post.ContentId, ContentType.Post);
@@ -215,4 +197,19 @@ public class PostService
         };
     }
 
+    // Hjælpemetoder / Queries
+    private IQueryable<Post> GetAllPostsQuery()
+    {
+        return postRepository.GetManyAsync();
+    }
+
+    private IQueryable<Post> GetPostsByUserQuery(int userId)
+    {
+        return postRepository.GetManyAsync().Where(p => p.UserId == userId);
+    }
+
+    private IQueryable<Post> GetPostsBySubforumQuery(int subforumId)
+    {
+        return postRepository.GetManyAsync().Where(p => p.SubforumId == subforumId);
+    }
 }

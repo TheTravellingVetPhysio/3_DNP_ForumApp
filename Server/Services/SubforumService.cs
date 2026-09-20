@@ -28,32 +28,38 @@ public class SubforumService
             throw new ArgumentException("Navnet på subforummet må ikke være tomt.");
         }
 
-        bool subforumnameTaken = subforumRepository.GetManyAsync()
-            .Any(u => u.Subforumname.Equals(subforumname, StringComparison.OrdinalIgnoreCase));
+        bool nameTaken = subforumRepository.GetManyAsync()
+            .Any(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
-        if (subforumnameTaken)
+        if (nameTaken)
         {
-            throw new InvalidOperationException($"Navnet '{subforumname}' er allerede taget.");
+            throw new InvalidOperationException($"Navnet '{name}' er allerede taget.");
         }
 
         await userService.EnsureUserExistsAsync(userId);
 
         Subforum subforum = new Subforum
         {
-            Name = subforumname,
+            Name = name,
             UserId = userId
         };
 
         return await subforumRepository.AddAsync(subforum);
     }
 
-    public async Task<Subforum> DeleteSubforumAsync(int subforumId)
+    public async Task DeleteSubforumAsync(int subforumId)
     {
-        Subforum subforum = GetSubforumByIdAsync(subforumId);
+        await subforumRepository.GetSingleAsync(subforumId);
 
-        if (postService.GetPostCountBySubforumAsync(subforumId) == 0)
+        int postCount = await postService.GetPostCountBySubforumAsync(subforumId) == 0;
+        
+        if (postCount == 0)
         {
-            await subforumRepository.DeleteAsync(subforum);
+            await subforumRepository.DeleteAsync(subforumId);
+        }
+        else
+        {
+            throw new InvalidOperationException("Subforummet kan ikke slettes, da det indeholder indlæg.");
         }
 
     }
