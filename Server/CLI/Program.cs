@@ -1,28 +1,34 @@
 ﻿using Entities;
 using RepositoryContracts;
-using InMemoryRepositories;
 using CLI.UI;
+using FileRepositories;
 
-Console.WriteLine("Starting CLI app...");
+// Repositories
+IUserRepository userRepository = new UserFileRepository();
+IPostRepository postRepository = new PostFileRepository();
+ICommentRepository commentRepository = new CommentFileRepository();
+IReactionRepository reactionRepository = new ReactionFileRepository();
+ISubforumRepository subforumRepository = new SubforumFileRepository();
 
-IUserRepository userRepository = new UserInMemoryRepository();
-IPostRepository postRepository = new PostInMemoryRepository();
-ICommentRepository commentRepository = new CommentInMemoryRepository();
-IReactionRepository reactionRepository = new ReactionInMemoryRepository();
-ISubforumRepository subforumRepository = new SubforumInMemoryRepository();
+// Services – rækkefølgen her er bestemt af KONSTRUKTØR-afhængigheder, ikke af domænelogik
+UserService userService = new UserService(userRepository);
+ReactionService reactionService = new ReactionService(reactionRepository, userRepository, postRepository, commentRepository);
+CommentService commentService = new CommentService(commentRepository, postRepository, userService, reactionService);
+PostService postService = new PostService(postRepository, subforumRepository, userService, commentService, reactionService);
+SubforumService subforumService = new SubforumService(subforumRepository, userService, postService); // SIDST, fordi den kræver postService
 
 await DataSeeder.SeedAsync(
-    userRepository,
-    postRepository,
-    commentRepository,
-    reactionRepository,
-    subforumRepository);
+    userService,
+    postService,
+    commentService,
+    reactionService,
+    subforumService);
 
 CliApp cliApp = new CliApp(
-    userRepository,
-    postRepository,
-    commentRepository,
-    reactionRepository,
-    subforumRepository);
+    userService,
+    postService,
+    commentService,
+    reactionService,
+    subforumService);
 
 await cliApp.RunAsync();

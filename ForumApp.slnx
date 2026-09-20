@@ -5,5 +5,6 @@
     <Project Path="Server/InMemoryRepositories/InMemoryRepositories.csproj" />
     <Project Path="Server/RepositoryContracts/RepositoryContracts.csproj" />
     <Project Path="Server/Services/Services.csproj" />
+    <Project Path="Server/FileRepositories/FileRepositories.csproj" />
   </Folder>
 </Solution>

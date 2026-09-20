@@ -12,6 +12,9 @@ public static class DataSeeder
         IReactionRepository reactionRepository,
         ISubforumRepository subforumRepository)
     {
+        if (userService.GetAllUsers().Any())
+            return;
+            
         // Users
         User alice = await userRepository.AddAsync(new User { Username = "alice", Password = "password123" });
         User bob = await userRepository.AddAsync(new User { Username = "bob", Password = "hunter2" });
