@@ -112,6 +112,7 @@ public class PostService
         List<Post> posts = GetPostsBySubforumQuery(subforumId).ToList();
         List<int> relevantPostIds = posts.Select(p => p.ContentId).ToList();
         List<Comment> relevantComments = await commentService.GetCommentsByPostIdsAsync(relevantPostIds);
+        
         List<User> users = await userService.GetAllUsersAsync();
 
         List<PostSummary> summaries = posts
