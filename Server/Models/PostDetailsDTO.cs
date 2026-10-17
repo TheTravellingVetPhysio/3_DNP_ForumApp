@@ -1,14 +1,15 @@
-namespace Services.Models;
+namespace Models;
 
 using Entities;
 
-public class CommentDetailsDTO
+public class PostDetailsDTO
 {
-    public required int CommentId { get; set; }
+    public required int PostId { get; set; }
+    public required string Title { get; set; }
     public required string Body { get; set; }
     public required int UserId { get; set; }
     public required string Username { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
-    public int? ParentCommentId { get; set; }
     public required Dictionary<ReactionType, int> ReactionCounts { get; set; }
+    public required List<CommentDetailsDTO> Comments { get; set; }
 }

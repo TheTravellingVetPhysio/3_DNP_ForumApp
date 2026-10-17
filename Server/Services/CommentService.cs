@@ -2,7 +2,7 @@ namespace Services;
 
 using Entities;
 using RepositoryContracts;
-using Services.Models;
+using Models;
 
 public class CommentService
 {

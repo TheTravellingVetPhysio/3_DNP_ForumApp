@@ -1,7 +1,7 @@
-﻿using Entities;
-using RepositoryContracts;
+﻿using RepositoryContracts;
 using CLI.UI;
 using FileRepositories;
+using Services;
 
 // Repositories
 IUserRepository userRepository = new UserFileRepository();
@@ -14,8 +14,8 @@ ISubforumRepository subforumRepository = new SubforumFileRepository();
 UserService userService = new UserService(userRepository);
 ReactionService reactionService = new ReactionService(reactionRepository, userRepository, postRepository, commentRepository);
 CommentService commentService = new CommentService(commentRepository, postRepository, userService, reactionService);
-PostService postService = new PostService(postRepository, subforumRepository, userService, commentService, reactionService);
-SubforumService subforumService = new SubforumService(subforumRepository, userService, postService); // SIDST, fordi den kræver postService
+SubforumService subforumService = new SubforumService(subforumRepository, userService, postRepository);
+PostService postService = new PostService(postRepository, userService, subforumService, commentService, reactionService);
 
 await DataSeeder.SeedAsync(
     userService,

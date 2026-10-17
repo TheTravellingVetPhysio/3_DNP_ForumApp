@@ -7,17 +7,17 @@ public class SubforumService
 {
     private readonly ISubforumRepository subforumRepository;
     private readonly UserService userService;
-    private readonly PostService postService;
+    private readonly IPostRepository postRepository;
 
     public SubforumService(
         ISubforumRepository subforumRepository,
         UserService userService,
-        PostService postService
+        IPostRepository postRepository
     )
     {
         this.subforumRepository = subforumRepository;
         this.userService = userService;
-        this.postService = postService;
+        this.postRepository = postRepository;
     }
 
     // CRUD
@@ -51,7 +51,7 @@ public class SubforumService
     {
         await subforumRepository.GetSingleAsync(subforumId);
 
-        int postCount = await postService.GetPostCountBySubforumAsync(subforumId) == 0;
+        int postCount = await postRepository.GetPostCountBySubforumAsync(subforumId);
         
         if (postCount == 0)
         {

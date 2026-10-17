@@ -1,4 +1,4 @@
-namespace Services.Models;
+namespace Models;
 
 public class PostOverviewDTO
 {
