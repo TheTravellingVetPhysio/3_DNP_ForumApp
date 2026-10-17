@@ -2,8 +2,7 @@ namespace FileRepositories;
 
 using Entities;
 using RepositoryContracts;
-using Models;
-
+using ApiContracts;
 public class CommentFileRepository : FileRepository<Comment>, ICommentRepository
 {
     private readonly IUserRepository userRepository;

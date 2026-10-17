@@ -1,4 +1,4 @@
-namespace Models;
+namespace ApiContracts;
 
 public class PostOverviewDTO
 {

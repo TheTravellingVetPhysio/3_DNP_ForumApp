@@ -2,7 +2,7 @@
 namespace FileRepositories;
 
 using Entities;
-using Models;
+using ApiContracts;
 using RepositoryContracts;
 
 public class PostFileRepository : FileRepository<Post>, IPostRepository

@@ -1,9 +1,11 @@
 <Solution>
   <Folder Name="/Server/">
     <Project Path="Server/Entities/Entities.csproj" />
-    <Project Path="Server/Models/Models.csproj" />
     <Project Path="Server/RepositoryContracts/RepositoryContracts.csproj" />
     <Project Path="Server/Services/Services.csproj" />
     <Project Path="Server/FileRepositories/FileRepositories.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/ApiContracts/ApiContracts.csproj" />
   </Folder>
 </Solution>

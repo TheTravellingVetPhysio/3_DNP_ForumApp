@@ -2,7 +2,7 @@ namespace Services;
 
 using Entities;
 using RepositoryContracts;
-using Models;
+using ApiContracts;
 
 public class PostService
 {
