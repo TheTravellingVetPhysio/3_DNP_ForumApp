@@ -96,14 +96,10 @@ public class PostService
     }
 
     public Task<int> GetPostCountByUserAsync(int userId)
-    {
-        return Task.FromResult(GetPostsByUserQuery(userId).Count());
-    }
+        => postRepository.GetPostCountByUserAsync(userId);
 
     public Task<int> GetPostCountBySubforumAsync(int subforumId)
-    {
-        return Task.FromResult(GetPostsBySubforumQuery(subforumId).Count());
-    }
+        => postRepository.GetPostCountBySubforumAsync(subforumId);
 
 
     // Views - husk at rette PostOverviewDTO alle steder ved ændringer...
@@ -113,42 +109,6 @@ public class PostService
     public Task<List<PostOverviewDTO>> GetPostsOverviewByUserAsync(int userId)
         => postRepository.GetPostsOverviewByUserAsync(userId);
 
-    public async Task<PostDetailsDTO> GetPostDetailsAsync(int postId)
-    {
-        Post post = await postRepository.GetSingleAsync(postId);
-        User postUser = await userService.GetUserByIdAsync(post.UserId);
-
-        Dictionary<ReactionType, int> reactionCounts =
-                await reactionService.GetReactionCountsAsync(post.ContentId, ContentType.Post);
-
-        List<CommentDetailsDTO> commentDetailsDTOs = await commentService.GetCommentDetailsForPostAsync(postId);
-
-        return new PostDetailsDTO
-        {
-            PostId = post.ContentId,
-            Title = post.Title,
-            Body = post.Body,
-            UserId = post.UserId,
-            Username = postUser.Username,
-            CreatedAt = post.Timestamp,
-            ReactionCounts = reactionCounts,
-            Comments = commentDetailsDTOs
-        };
-    }
-
-    // Hjælpemetoder / Queries
-    private IQueryable<Post> GetAllPostsQuery()
-    {
-        return postRepository.GetManyAsync();
-    }
-
-    private IQueryable<Post> GetPostsByUserQuery(int userId)
-    {
-        return postRepository.GetManyAsync().Where(p => p.UserId == userId);
-    }
-
-    private IQueryable<Post> GetPostsBySubforumQuery(int subforumId)
-    {
-        return postRepository.GetManyAsync().Where(p => p.SubforumId == subforumId);
-    }
+    public Task<PostDetailsDTO> GetPostDetailsAsync(int postId)
+        => postRepository.GetPostDetailsAsync(postId);
 }
