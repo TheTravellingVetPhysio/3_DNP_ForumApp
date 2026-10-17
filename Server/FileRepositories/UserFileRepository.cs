@@ -11,4 +11,13 @@ public class UserFileRepository : FileRepository<User>, IUserRepository
         setId: (u, id) => u.UserId = id)
     {
     }
+
+    public async Task<bool> UsernameExistsAsync(string username)
+    {
+        List<User> users = await GetManyAsync();
+
+        return users.Any(u =>
+            u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+    }
+
 }

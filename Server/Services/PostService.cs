@@ -9,18 +9,18 @@ public class PostService
     private readonly IPostRepository postRepository;
     private readonly UserService userService;
     private readonly SubforumService subforumService;
-    private readonly CommentService commentService;
+    private readonly ICommentRepository commentRepository;
 
     public PostService(
         IPostRepository postRepository,
         UserService userService,
         SubforumService subforumService,
-        CommentService commentService)
+        ICommentRepository commentRepository)
     {
         this.postRepository = postRepository;
         this.userService = userService;
         this.subforumService = subforumService;
-        this.commentService = commentService;
+        this.commentRepository = commentRepository;
     }
 
     // CRUD
@@ -73,7 +73,7 @@ public class PostService
     {
         await postRepository.GetSingleAsync(postId);
 
-        int commentCount = await commentService.GetCommentCountByPostIdAsync(postId);
+        int commentCount = await commentRepository.GetCommentCountByPostIdAsync(postId);
 
         if (commentCount == 0)
         {

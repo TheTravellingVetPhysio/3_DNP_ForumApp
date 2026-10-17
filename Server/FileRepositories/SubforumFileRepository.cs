@@ -12,9 +12,11 @@ public class SubforumFileRepository : FileRepository<Subforum>, ISubforumReposit
     {
     }
 
-    public Task<bool> SubforumNameExistsAsync(string name)
+    public async Task<bool> SubforumNameExistsAsync(string name)
     {
-        throw new NotImplementedException();
+        List<Subforum> subforums = await GetManyAsync();
+
+        return subforums.Any(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
 }
