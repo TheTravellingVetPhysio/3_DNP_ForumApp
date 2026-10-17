@@ -9,21 +9,18 @@ public class PostService
     private readonly IPostRepository postRepository;
     private readonly UserService userService;
     private readonly SubforumService subforumService;
-    private readonly ReactionService reactionService;
     private readonly CommentService commentService;
 
     public PostService(
         IPostRepository postRepository,
         UserService userService,
         SubforumService subforumService,
-        CommentService commentService,
-        ReactionService reactionService)
+        CommentService commentService)
     {
         this.postRepository = postRepository;
         this.userService = userService;
         this.subforumService = subforumService;
         this.commentService = commentService;
-        this.reactionService = reactionService;
     }
 
     // CRUD

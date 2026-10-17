@@ -95,10 +95,6 @@ public abstract class FileRepository<T>
         return entity;
     }
 
-    // Interfacet kræver IQueryable<T>, ikke Task<IQueryable<T>> - derfor .Result her, som opgaven selv nævner
-    public IQueryable<T> GetManyAsync()
-    {
-        List<T> entities = LoadAsync().Result;
-        return entities.AsQueryable();
-    }
+    public Task<List<T>> GetManyAsync()
+        => LoadAsync();
 }

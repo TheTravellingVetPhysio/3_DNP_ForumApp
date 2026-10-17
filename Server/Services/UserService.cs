@@ -25,8 +25,7 @@ public class UserService
             throw new ArgumentException("Adgangskode skal være mindst 6 tegn.");
         }
 
-        bool usernameTaken = userRepository.GetManyAsync()
-            .Any(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+        bool usernameTaken = await userRepository.UsernameExistsAsync(username);
 
         if (usernameTaken)
         {
@@ -39,14 +38,10 @@ public class UserService
 
     // Getters
     public Task<List<User>> GetAllUsersAsync()
-    {
-        return Task.FromResult(userRepository.GetManyAsync().ToList());
-    }
-    
-    public async Task<User> GetUserByIdAsync(int userId)
-    {
-        return await userRepository.GetSingleAsync(userId);
-    }
+        => userRepository.GetManyAsync();
+
+    public Task<User> GetUserByIdAsync(int userId)
+        => userRepository.GetSingleAsync(userId);
 
     public async Task EnsureUserExistsAsync(int userId)
     {

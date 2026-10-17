@@ -28,8 +28,7 @@ public class SubforumService
             throw new ArgumentException("Navnet på subforummet må ikke være tomt.");
         }
 
-        bool nameTaken = subforumRepository.GetManyAsync()
-            .Any(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        bool nameTaken = await subforumRepository.SubforumNameExistsAsync(name);
 
         if (nameTaken)
         {
@@ -52,7 +51,7 @@ public class SubforumService
         await subforumRepository.GetSingleAsync(subforumId);
 
         int postCount = await postRepository.GetPostCountBySubforumAsync(subforumId);
-        
+
         if (postCount == 0)
         {
             await subforumRepository.DeleteAsync(subforumId);

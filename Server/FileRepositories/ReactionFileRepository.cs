@@ -11,4 +11,19 @@ public class ReactionFileRepository : FileRepository<Reaction>, IReactionReposit
         setId: (r, id) => r.ReactionId = id)
     {
     }
+
+    public Task<Reaction?> GetReactionByUserAndContentAsync(
+        int userId,
+        int contentId,
+        ContentType contentType)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Dictionary<ReactionType, int>> GetReactionCountsAsync(
+        int contentId,
+        ContentType contentType)
+    {
+        throw new NotImplementedException();
+    }
 }

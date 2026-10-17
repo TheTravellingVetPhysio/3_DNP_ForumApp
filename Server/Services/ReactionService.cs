@@ -28,7 +28,9 @@ public class ReactionService
         await userRepository.GetSingleAsync(userId);
         await EnsureContentExistsAsync(contentId, contentType);
 
-        Reaction? existing = FindExistingReaction(userId, contentId, contentType);
+        Reaction? existing =
+            await reactionRepository.GetReactionByUserAndContentAsync(
+                userId, contentId, contentType);
         if (existing is not null)
         {
             throw new InvalidOperationException(
@@ -48,7 +50,9 @@ public class ReactionService
 
     public async Task UpdateReactionAsync(int userId, int contentId, ContentType contentType, ReactionType newReactionType)
     {
-        Reaction? existing = FindExistingReaction(userId, contentId, contentType);
+        Reaction? existing =
+            await reactionRepository.GetReactionByUserAndContentAsync(
+                userId, contentId, contentType);
         if (existing is null)
         {
             throw new InvalidOperationException("Brugeren har ikke reageret på dette indhold endnu.");
@@ -60,7 +64,9 @@ public class ReactionService
 
     public async Task RemoveReactionAsync(int userId, int contentId, ContentType contentType)
     {
-        Reaction? existing = FindExistingReaction(userId, contentId, contentType);
+        Reaction? existing =
+            await reactionRepository.GetReactionByUserAndContentAsync(
+                userId, contentId, contentType);
         if (existing is null)
         {
             throw new InvalidOperationException("Brugeren har ikke reageret på dette indhold.");
@@ -71,25 +77,9 @@ public class ReactionService
 
     // Getters
     public Task<Dictionary<ReactionType, int>> GetReactionCountsAsync(int contentId, ContentType contentType)
-    {
-        Dictionary<ReactionType, int> counts = reactionRepository.GetManyAsync()
-            .Where(r => r.ContentId == contentId && r.ContentType == contentType)
-            .GroupBy(r => r.ReactionType)
-            .ToDictionary(g => g.Key, g => g.Count());
-
-        return Task.FromResult(counts);
-    }
+        => reactionRepository.GetReactionCountsAsync(contentId, contentType);
 
     // Hjælpemetoder
-    private Reaction? FindExistingReaction(int userId, int contentId, ContentType contentType)
-    {
-        return reactionRepository.GetManyAsync()
-            .SingleOrDefault(r =>
-                r.UserId == userId &&
-                r.ContentId == contentId &&
-                r.ContentType == contentType);
-    }
-
     private async Task EnsureContentExistsAsync(int contentId, ContentType contentType)
     {
         if (contentType == ContentType.Post)

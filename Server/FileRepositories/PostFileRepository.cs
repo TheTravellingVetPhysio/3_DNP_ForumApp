@@ -29,6 +29,11 @@ int subforumId)
         throw new NotImplementedException();
     }
 
+    public Task<int> GetPostCountByUserAsync(int userId)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task<int> GetPostCountBySubforumAsync(int subforumId)
     {
         throw new NotImplementedException();

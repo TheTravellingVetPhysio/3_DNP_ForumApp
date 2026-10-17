@@ -11,4 +11,10 @@ public class SubforumFileRepository : FileRepository<Subforum>, ISubforumReposit
         setId: (s, id) => s.SubforumId = id)
     {
     }
+
+    public Task<bool> SubforumNameExistsAsync(string name)
+    {
+        throw new NotImplementedException();
+    }
+
 }
