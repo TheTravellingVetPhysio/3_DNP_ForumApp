@@ -1,4 +1,4 @@
-namespace ApiContracts.Comments;
+namespace ApiContracts;
 
 using System.ComponentModel.DataAnnotations;
 
