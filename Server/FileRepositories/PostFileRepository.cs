@@ -125,7 +125,7 @@ public class PostFileRepository : FileRepository<Post>, IPostRepository
                 ContentType.Post);
 
         List<CommentDetailsDTO> commentDetails =
-            await commentRepository.GetCommentDetailsForPostAsync(postId);
+            await commentRepository.GetCommentDetailsAsync(postId, null, null);
 
         return new PostDetailsDTO
         {

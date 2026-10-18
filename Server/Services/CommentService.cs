@@ -83,6 +83,9 @@ public class CommentService
         => commentRepository.GetCommentCountByPostIdAsync(postId);
 
     // Views
-    public Task<List<CommentDetailsDTO>> GetCommentDetailsForPostAsync(int postId)
-        => commentRepository.GetCommentDetailsForPostAsync(postId);
+    public Task<List<CommentDetailsDTO>> GetCommentDetailsAsync(
+        int? postId,
+        int? userId,
+        string? username)
+        => commentRepository.GetCommentDetailsAsync(postId, userId, username);
 }

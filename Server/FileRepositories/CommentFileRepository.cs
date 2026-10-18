@@ -47,10 +47,36 @@ public class CommentFileRepository : FileRepository<Comment>, ICommentRepository
         return comments.Count(c => c.PostId == postId);
     }
 
-    public async Task<List<CommentDetailsDTO>> GetCommentDetailsForPostAsync(
-    int postId)
+    public async Task<List<CommentDetailsDTO>> GetCommentDetailsAsync(
+        int? postId,
+        int? userId,
+        string? username)
     {
-        List<Comment> comments = await GetCommentsByPostIdAsync(postId);
+        List<Comment> comments = await GetManyAsync();
+
+        if (postId.HasValue)
+            comments = comments.Where(c => c.PostId == postId.Value).ToList();
+
+        if (userId.HasValue)
+            comments = comments.Where(c => c.UserId == userId.Value).ToList();
+
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            List<User> users = await userRepository.GetManyAsync();
+
+            var matchingUserIds = users
+                .Where(u => u.Username.Contains(username,
+                    StringComparison.OrdinalIgnoreCase))
+                .Select(u => u.UserId)
+                .ToHashSet();
+
+            comments = comments
+                .Where(c => matchingUserIds.Contains(c.UserId))
+                .ToList();
+        }
+
+        comments = comments.OrderBy(c => c.Timestamp).ToList();
+
         List<CommentDetailsDTO> result = new();
 
         foreach (Comment comment in comments)
@@ -59,8 +85,7 @@ public class CommentFileRepository : FileRepository<Comment>, ICommentRepository
 
             Dictionary<ReactionType, int> reactionCounts =
                 await reactionRepository.GetReactionCountsAsync(
-                    comment.ContentId,
-                    ContentType.Comment);
+                    comment.ContentId, ContentType.Comment);
 
             result.Add(new CommentDetailsDTO
             {

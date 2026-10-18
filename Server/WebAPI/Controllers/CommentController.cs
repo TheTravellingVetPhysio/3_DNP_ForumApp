@@ -16,13 +16,17 @@ public class CommentController : ControllerBase
         this.commentService = commentService;
     }
 
-    // GET: api/comments/by-post/1
-    [HttpGet("by-post/{postId:int}")]
-    public async Task<ActionResult<List<CommentDetailsDTO>>> GetCommentsByPostId(
-        int postId)
+    // GET: api/comments?postId=1&userId=2&username=anna
+    [HttpGet]
+    public async Task<ActionResult<List<CommentDetailsDTO>>> GetComments(
+        [FromQuery] int? postId,
+        [FromQuery] int? userId,
+        [FromQuery] string? username)
     {
-        var comments =
-            await commentService.GetCommentDetailsForPostAsync(postId);
+        var comments = await commentService.GetCommentDetailsAsync(
+            postId,
+            userId,
+            username);
 
         return Ok(comments);
     }
