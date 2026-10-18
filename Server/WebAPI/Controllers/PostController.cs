@@ -20,15 +20,8 @@ public class PostController : ControllerBase
     [HttpGet("{postId:int}")]
     public async Task<ActionResult<PostDetailsDTO>> GetPostById(int postId)
     {
-        try
-        {
-            var post = await postService.GetPostDetailsAsync(postId);
-            return Ok(post);
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound();
-        }
+        var post = await postService.GetPostDetailsAsync(postId);
+        return Ok(post);
     }
 
     // GET: api/posts/by-user/1
@@ -56,68 +49,39 @@ public class PostController : ControllerBase
     public async Task<ActionResult<PostDetailsDTO>> CreatePost(
         [FromBody] CreatePostRequest request)
     {
-        try
-        {
-            var post = await postService.CreatePostAsync(
-                request.Title,
-                request.Body,
-                request.UserId,
-                request.SubforumId);
+        var post = await postService.CreatePostAsync(
+            request.Title,
+            request.Body,
+            request.UserId,
+            request.SubforumId);
 
-            var result = await postService.GetPostDetailsAsync(post.ContentId);
+        var result = await postService.GetPostDetailsAsync(post.ContentId);
 
-            return CreatedAtAction(
-                nameof(GetPostById),
-                new { postId = post.ContentId },
-                result);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { error = ex.Message });
-        }
+        return CreatedAtAction(
+            nameof(GetPostById),
+            new { postId = post.ContentId },
+            result);
     }
 
     // PUT: api/posts/1
-    [HttpPut("{postId:int}")]
+     [HttpPut("{postId:int}")]
     public async Task<IActionResult> UpdatePost(
         int postId,
         [FromBody] UpdatePostRequest request)
     {
-        try
-        {
-            await postService.UpdatePostAsync(
-                postId,
-                request.Title,
-                request.Body);
+        await postService.UpdatePostAsync(
+            postId,
+            request.Title,
+            request.Body);
 
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { error = ex.Message });
-        }
+        return NoContent();
     }
 
     // DELETE: api/posts/1
     [HttpDelete("{postId:int}")]
     public async Task<IActionResult> DeletePost(int postId)
     {
-        try
-        {
-            await postService.DeletePostAsync(postId);
-            return NoContent();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { error = ex.Message });
-        }
+        await postService.DeletePostAsync(postId);
+        return NoContent();
     }
 }

@@ -2,6 +2,7 @@ namespace Services;
 
 using Entities;
 using RepositoryContracts;
+using Exceptions;
 
 public class UserService
 {
@@ -29,7 +30,7 @@ public class UserService
 
         if (usernameTaken)
         {
-            throw new InvalidOperationException($"Brugernavnet '{username}' er allerede taget.");
+            throw new BusinessConflictException($"Brugernavnet '{username}' er allerede taget.");
         }
 
         User user = new User { Username = username, Password = password };

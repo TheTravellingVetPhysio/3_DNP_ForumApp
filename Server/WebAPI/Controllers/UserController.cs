@@ -32,16 +32,9 @@ public class UserController : ControllerBase
     [HttpGet("{userId:int}")]
     public async Task<ActionResult<UserDTO>> GetUserById(int userId)
     {
-        try
-        {
-            var user = await userService.GetUserByIdAsync(userId);
+        var user = await userService.GetUserByIdAsync(userId);
 
-            return Ok(UserMapper.ToDTO(user));
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound();
-        }
+        return Ok(UserMapper.ToDTO(user));
     }
 
     // POST: api/users
@@ -49,26 +42,15 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserDTO>> CreateUser(
         [FromBody] CreateUserRequest request)
     {
-        try
-        {
-            var user = await userService.CreateUserAsync(
-                request.Username,
-                request.Password);
+        var user = await userService.CreateUserAsync(
+            request.Username,
+            request.Password);
 
-            UserDTO result = UserMapper.ToDTO(user);
+        UserDTO result = UserMapper.ToDTO(user);
 
-            return CreatedAtAction(
-                nameof(GetUserById),
-                new { userId = user.UserId },
-                result);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { error = ex.Message });
-        }
+        return CreatedAtAction(
+            nameof(GetUserById),
+            new { userId = user.UserId },
+            result);
     }
 }

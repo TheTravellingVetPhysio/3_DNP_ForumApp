@@ -2,6 +2,7 @@ namespace Services;
 
 using Entities;
 using RepositoryContracts;
+using Exceptions;
 
 public class ReactionService
 {
@@ -33,7 +34,7 @@ public class ReactionService
                 userId, contentId, contentType);
         if (existing is not null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessConflictException(
                 "Brugeren har allerede reageret på dette indhold. Brug UpdateReactionAsync for at ændre reaktionen.");
         }
 
@@ -55,7 +56,7 @@ public class ReactionService
                 userId, contentId, contentType);
         if (existing is null)
         {
-            throw new InvalidOperationException("Brugeren har ikke reageret på dette indhold endnu.");
+            throw new ResourceNotFoundException("Brugeren har ikke reageret på dette indhold endnu.");
         }
 
         existing.ReactionType = newReactionType;
@@ -69,7 +70,7 @@ public class ReactionService
                 userId, contentId, contentType);
         if (existing is null)
         {
-            throw new InvalidOperationException("Brugeren har ikke reageret på dette indhold.");
+            throw new ResourceNotFoundException("Brugeren har ikke reageret på dette indhold.");
         }
 
         await reactionRepository.DeleteAsync(existing.ReactionId);

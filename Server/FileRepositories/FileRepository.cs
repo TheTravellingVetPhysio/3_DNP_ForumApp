@@ -1,7 +1,7 @@
 namespace FileRepositories;
 
 using System.Text.Json;
-using RepositoryContracts;
+using Exceptions;
 
 public abstract class FileRepository<T>
 {
@@ -59,7 +59,7 @@ public abstract class FileRepository<T>
         T? existing = entities.SingleOrDefault(e => getId(e) == getId(entity));
         if (existing is null)
         {
-            throw new InvalidOperationException($"{typeof(T).Name} with ID '{getId(entity)}' not found");
+            throw new ResourceNotFoundException($"{typeof(T).Name} with ID '{getId(entity)}' not found");
         }
 
         entities.Remove(existing);
@@ -75,7 +75,7 @@ public abstract class FileRepository<T>
         T? toRemove = entities.SingleOrDefault(e => getId(e) == id);
         if (toRemove is null)
         {
-            throw new InvalidOperationException($"{typeof(T).Name} with ID '{id}' not found");
+            throw new ResourceNotFoundException($"{typeof(T).Name} with ID '{id}' not found");
         }
 
         entities.Remove(toRemove);
@@ -89,7 +89,7 @@ public abstract class FileRepository<T>
         T? entity = entities.SingleOrDefault(e => getId(e) == id);
         if (entity is null)
         {
-            throw new InvalidOperationException($"{typeof(T).Name} with ID '{id}' not found");
+            throw new ResourceNotFoundException($"{typeof(T).Name} with ID '{id}' not found");
         }
 
         return entity;

@@ -3,6 +3,7 @@ namespace Services;
 using Entities;
 using RepositoryContracts;
 using ApiContracts;
+using Exceptions;
 
 public class PostService
 {
@@ -60,7 +61,7 @@ public class PostService
         TimeSpan timeSinceCreation = DateTimeOffset.UtcNow - post.Timestamp;
         if (timeSinceCreation > TimeSpan.FromHours(24))
         {
-            throw new InvalidOperationException("Posten kan ikke længere redigeres, da den er mere end 24 timer gammel.");
+            throw new BusinessConflictException("Posten kan ikke længere redigeres, da den er mere end 24 timer gammel.");
         }
 
         post.Title = newTitle;
@@ -81,7 +82,7 @@ public class PostService
         }
         else
         {
-            throw new InvalidOperationException("Indlægget kan ikke slettes, da det indeholder kommentarer.");
+            throw new BusinessConflictException("Indlægget kan ikke slettes, da det indeholder kommentarer.");
         }
 
     }

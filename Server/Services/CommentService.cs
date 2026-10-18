@@ -3,6 +3,7 @@ namespace Services;
 using Entities;
 using RepositoryContracts;
 using ApiContracts;
+using Exceptions;
 
 public class CommentService
 {
@@ -36,7 +37,7 @@ public class CommentService
             Comment parent = await commentRepository.GetSingleAsync(parentCommentId.Value);
             if (parent.PostId != postId)
             {
-                throw new InvalidOperationException("Kommentaren, der svares på, hører ikke til dette postId.");
+                throw new BusinessConflictException("Kommentaren, der svares på, hører ikke til dette postId.");
             }
         }
 
@@ -60,7 +61,7 @@ public class CommentService
         TimeSpan timeSinceCreation = DateTimeOffset.UtcNow - comment.Timestamp;
         if (timeSinceCreation > TimeSpan.FromHours(24))
         {
-            throw new InvalidOperationException("Kommentaren kan ikke længere redigeres, da den er mere end 24 timer gammel.");
+            throw new BusinessConflictException("Kommentaren kan ikke længere redigeres, da den er mere end 24 timer gammel.");
         }
 
         comment.Body = newBody;

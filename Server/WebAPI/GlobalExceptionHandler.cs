@@ -27,9 +27,9 @@ public class GlobalExceptionHandler : IExceptionHandler
             Status = statusCode,
             Title = statusCode switch
             {
-                400 => "Bad Request",
-                404 => "Not Found",
-                409 => "Conflict",
+                StatusCodes.Status400BadRequest => "Bad Request",
+                StatusCodes.Status404NotFound => "Not Found",
+                StatusCodes.Status409Conflict => "Conflict",
                 _ => "Internal Server Error"
             },
             Detail = statusCode == 500

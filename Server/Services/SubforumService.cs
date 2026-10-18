@@ -2,6 +2,7 @@ namespace Services;
 
 using Entities;
 using RepositoryContracts;
+using Exceptions;
 
 public class SubforumService
 {
@@ -32,7 +33,7 @@ public class SubforumService
 
         if (nameTaken)
         {
-            throw new InvalidOperationException($"Navnet '{name}' er allerede taget.");
+            throw new BusinessConflictException($"Navnet '{name}' er allerede taget.");
         }
 
         await userService.EnsureUserExistsAsync(userId);
@@ -58,7 +59,7 @@ public class SubforumService
         }
         else
         {
-            throw new InvalidOperationException("Subforummet kan ikke slettes, da det indeholder indlæg.");
+            throw new BusinessConflictException("Subforummet kan ikke slettes, da det indeholder indlæg.");
         }
 
     }
