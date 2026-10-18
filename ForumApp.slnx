@@ -4,6 +4,7 @@
     <Project Path="Server/RepositoryContracts/RepositoryContracts.csproj" />
     <Project Path="Server/Services/Services.csproj" />
     <Project Path="Server/FileRepositories/FileRepositories.csproj" />
+    <Project Path="Server/WebAPI/WebAPI.csproj" />
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="Shared/ApiContracts/ApiContracts.csproj" />
