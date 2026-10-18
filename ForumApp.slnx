@@ -8,5 +8,6 @@
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="Shared/ApiContracts/ApiContracts.csproj" />
+    <Project Path="Shared/Exceptions/Exceptions.csproj" />
   </Folder>
 </Solution>
