@@ -42,35 +42,62 @@ public class PostFileRepository : FileRepository<Post>, IPostRepository
     }
 
     // Views
+    public async Task<List<PostOverviewDTO>> GetPostsOverviewAsync(
+    string? title,
+    int? userId,
+    string? username,
+    int? subforumId)
+{
+    List<Post> posts = await GetManyAsync();
 
-    public async Task<List<PostOverviewDTO>> GetPostsOverviewByUserAsync(
-        int userId)
+    if (!string.IsNullOrWhiteSpace(title))
     {
-        List<Post> posts = (await GetManyAsync())
-            .Where(p => p.UserId == userId)
-            .ToList();
-
-        return await CreatePostOverviewsAsync(posts);
-    }
-
-    public async Task<List<PostOverviewDTO>> ActivePostsInSubforumOverviewAsync(
-        int subforumId)
-    {
-        List<Post> posts = (await GetManyAsync())
-            .Where(p => p.SubforumId == subforumId)
-            .ToList();
-
-        List<PostOverviewDTO> summaries =
-            await CreatePostOverviewsAsync(posts);
-
-        return summaries
-            .OrderByDescending(p => p.LastActivityAt)
-            .Take(20)
+        posts = posts
+            .Where(p => p.Title.Contains(
+                title,
+                StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
 
-    // Shared logic for creating post overviews
+    if (userId.HasValue)
+    {
+        posts = posts
+            .Where(p => p.UserId == userId.Value)
+            .ToList();
+    }
 
+    if (!string.IsNullOrWhiteSpace(username))
+    {
+        List<User> users = await userRepository.GetManyAsync();
+
+        HashSet<int> matchingUserIds = users
+            .Where(u => u.Username.Contains(
+                username,
+                StringComparison.OrdinalIgnoreCase))
+            .Select(u => u.UserId)
+            .ToHashSet();
+
+        posts = posts
+            .Where(p => matchingUserIds.Contains(p.UserId))
+            .ToList();
+    }
+
+    if (subforumId.HasValue)
+    {
+        posts = posts
+            .Where(p => p.SubforumId == subforumId.Value)
+            .ToList();
+    }
+
+    List<PostOverviewDTO> overviews =
+        await CreatePostOverviewsAsync(posts);
+
+    return overviews
+        .OrderByDescending(p => p.LastActivityAt)
+        .ToList();
+}
+
+    // Hjælpemetoder - dataindsamling og mapping til DTO
     private async Task<List<PostOverviewDTO>> CreatePostOverviewsAsync(
         List<Post> posts)
     {

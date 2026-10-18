@@ -29,7 +29,7 @@ public class PostController : ControllerBase
     public async Task<ActionResult<List<PostOverviewDTO>>> GetPostsByUser(
         int userId)
     {
-        var posts = await postService.GetPostsOverviewByUserAsync(userId);
+        var posts = await postService.GetPostsOverviewAsync(null, userId, null, null);
         return Ok(posts);
     }
 
@@ -39,7 +39,7 @@ public class PostController : ControllerBase
         int subforumId)
     {
         var posts =
-            await postService.ActivePostsInSubforumOverviewAsync(subforumId);
+            await postService.GetPostsOverviewAsync(null, null, null, subforumId);
 
         return Ok(posts);
     }

@@ -101,11 +101,16 @@ public class PostService
 
 
     // Views - husk at rette PostOverviewDTO alle steder ved ændringer...
-    public Task<List<PostOverviewDTO>> ActivePostsInSubforumOverviewAsync(int subforumId)
-        => postRepository.ActivePostsInSubforumOverviewAsync(subforumId);
-
-    public Task<List<PostOverviewDTO>> GetPostsOverviewByUserAsync(int userId)
-        => postRepository.GetPostsOverviewByUserAsync(userId);
+    public Task<List<PostOverviewDTO>> GetPostsOverviewAsync(
+        string? title,
+        int? userId,
+        string? username,
+        int? subforumId)
+        => postRepository.GetPostsOverviewAsync(
+            title,
+            userId,
+            username,
+            subforumId);
 
     public Task<PostDetailsDTO> GetPostDetailsAsync(int postId)
         => postRepository.GetPostDetailsAsync(postId);
