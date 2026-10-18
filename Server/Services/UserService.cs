@@ -38,8 +38,8 @@ public class UserService
     }
 
     // Getters
-    public Task<List<User>> GetAllUsersAsync()
-        => userRepository.GetManyAsync();
+    public Task<List<User>> GetAllUsersAsync(string? username)
+        => userRepository.GetUsersAsync(username);
 
     public Task<User> GetUserByIdAsync(int userId)
         => userRepository.GetSingleAsync(userId);

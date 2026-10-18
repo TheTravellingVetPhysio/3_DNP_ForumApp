@@ -12,6 +12,9 @@ builder.Services.AddControllers();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserFileRepository>();
 builder.Services.AddScoped<IPostRepository, PostFileRepository>();
@@ -30,10 +33,10 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

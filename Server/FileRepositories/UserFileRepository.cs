@@ -20,4 +20,20 @@ public class UserFileRepository : FileRepository<User>, IUserRepository
             u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
     }
 
+    public async Task<List<User>> GetUsersAsync(string? username)
+    {
+        List<User> users = await GetManyAsync();
+
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            users = users
+                .Where(u => u.Username.Contains(
+                    username,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        return users;
+    }
+
 }

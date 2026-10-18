@@ -17,11 +17,12 @@ public class UserController : ControllerBase
         this.userService = userService;
     }
 
-    // GET: api/users
+    // GET: api/users?username=ann
     [HttpGet]
-    public async Task<ActionResult<List<UserDTO>>> GetAllUsers()
+    public async Task<ActionResult<List<UserDTO>>> GetAllUsers(
+        [FromQuery] string? username)
     {
-        var users = await userService.GetAllUsersAsync();
+        var users = await userService.GetAllUsersAsync(username);
 
         var result = users.Select(UserMapper.ToDTO).ToList();
 

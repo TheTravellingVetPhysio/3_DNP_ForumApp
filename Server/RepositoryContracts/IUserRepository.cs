@@ -5,4 +5,5 @@ namespace RepositoryContracts;
 public interface IUserRepository : IRepository<User>
 {
     Task<bool> UsernameExistsAsync(string username);
+    Task<List<User>> GetUsersAsync(string? username);
 }

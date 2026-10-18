@@ -24,22 +24,19 @@ public class PostController : ControllerBase
         return Ok(post);
     }
 
-    // GET: api/posts/by-user/1
-    [HttpGet("by-user/{userId:int}")]
-    public async Task<ActionResult<List<PostOverviewDTO>>> GetPostsByUser(
-        int userId)
+    // GET: api/posts?title=java&userId=1&username=ann&subforumId=2
+    [HttpGet]
+    public async Task<ActionResult<List<PostOverviewDTO>>> GetPosts(
+        [FromQuery] string? title,
+        [FromQuery] int? userId,
+        [FromQuery] string? username,
+        [FromQuery] int? subforumId)
     {
-        var posts = await postService.GetPostsOverviewAsync(null, userId, null, null);
-        return Ok(posts);
-    }
-
-    // GET: api/posts/by-subforum/1
-    [HttpGet("by-subforum/{subforumId:int}")]
-    public async Task<ActionResult<List<PostOverviewDTO>>> GetPostsBySubforum(
-        int subforumId)
-    {
-        var posts =
-            await postService.GetPostsOverviewAsync(null, null, null, subforumId);
+        var posts = await postService.GetPostsOverviewAsync(
+            title,
+            userId,
+            username,
+            subforumId);
 
         return Ok(posts);
     }
