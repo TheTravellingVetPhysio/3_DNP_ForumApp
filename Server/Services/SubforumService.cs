@@ -65,13 +65,12 @@ public class SubforumService
     }
 
     // Getters
-    public async Task<Subforum> GetSubforumByIdAsync(int subforumId)
-    {
-        return await subforumRepository.GetSingleAsync(subforumId);
-    }
+    public Task<Subforum> GetSubforumByIdAsync(int subforumId)
+        => subforumRepository.GetSingleAsync(subforumId);
 
-    public async Task EnsureSubforumExistsAsync(int subforumId)
-    {
-        await subforumRepository.GetSingleAsync(subforumId);
-    }
+    public Task EnsureSubforumExistsAsync(int subforumId)
+        => subforumRepository.GetSingleAsync(subforumId);
+
+    public Task<List<Subforum>> GetAllSubforumsAsync()
+        => subforumRepository.GetManyAsync();
 }
