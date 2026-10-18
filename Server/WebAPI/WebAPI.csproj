@@ -12,6 +12,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\ApiContracts\ApiContracts.csproj" />
+    <ProjectReference Include="..\FileRepositories\FileRepositories.csproj" />
+    <ProjectReference Include="..\RepositoryContracts\RepositoryContracts.csproj" />
+    <ProjectReference Include="..\Services\Services.csproj" />
   </ItemGroup>
 
 </Project>
