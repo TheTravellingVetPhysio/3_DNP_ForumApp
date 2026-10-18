@@ -56,7 +56,7 @@ public class ReactionService
                 userId, contentId, contentType);
         if (existing is null)
         {
-            throw new ResourceNotFoundException("Brugeren har ikke reageret på dette indhold endnu.");
+            throw new ResourceNotFoundException("Brugeren har ikke reageret på dette indhold.");
         }
 
         existing.ReactionType = newReactionType;
@@ -81,15 +81,23 @@ public class ReactionService
         => reactionRepository.GetReactionCountsAsync(contentId, contentType);
 
     // Hjælpemetoder
-    private async Task EnsureContentExistsAsync(int contentId, ContentType contentType)
+    private async Task EnsureContentExistsAsync(
+        int contentId,
+        ContentType contentType)
     {
-        if (contentType == ContentType.Post)
+        switch (contentType)
         {
-            await postRepository.GetSingleAsync(contentId);
-        }
-        else
-        {
-            await commentRepository.GetSingleAsync(contentId);
+            case ContentType.Post:
+                await postRepository.GetSingleAsync(contentId);
+                break;
+
+            case ContentType.Comment:
+                await commentRepository.GetSingleAsync(contentId);
+                break;
+
+            default:
+                throw new ArgumentException(
+                    "Ugyldig indholdstype.");
         }
     }
 }
