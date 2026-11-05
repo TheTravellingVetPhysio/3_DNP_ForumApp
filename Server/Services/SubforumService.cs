@@ -3,6 +3,7 @@ namespace Services;
 using Entities;
 using RepositoryContracts;
 using Exceptions;
+using ApiContracts;
 
 public class SubforumService
 {
@@ -73,4 +74,7 @@ public class SubforumService
 
     public Task<List<Subforum>> GetAllSubforumsAsync()
         => subforumRepository.GetManyAsync();
+
+    public Task<List<SubforumDTO>> GetSubforumOverviewAsync()
+        => subforumRepository.GetSubforumOverviewsAsync();
 }

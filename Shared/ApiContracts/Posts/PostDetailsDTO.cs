@@ -1,7 +1,5 @@
 namespace ApiContracts;
 
-using Entities;
-
 public class PostDetailsDTO
 {
     public required int PostId { get; set; }

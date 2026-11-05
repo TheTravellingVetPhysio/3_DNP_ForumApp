@@ -1,7 +1,5 @@
 namespace ApiContracts;
 
-using Entities;
-
 public class CommentDetailsDTO
 {
     public required int CommentId { get; set; }

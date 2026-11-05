@@ -1,6 +1,7 @@
-using System;
-
 namespace Entities;
+
+using System;
+using ApiContracts;
 
 public class Reaction
 {

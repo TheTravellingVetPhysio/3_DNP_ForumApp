@@ -1,7 +1,5 @@
 namespace ApiContracts;
 
-using Entities;
-
 public class CreateReactionRequest
 {
     public required int UserId { get; set; }

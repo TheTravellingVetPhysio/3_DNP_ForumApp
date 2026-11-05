@@ -19,9 +19,7 @@ public class SubforumController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<SubforumDTO>>> GetAllSubforums()
     {
-        var subforums = await subforumService.GetAllSubforumsAsync();
-
-        return Ok(SubforumMapper.ToDTOList(subforums));
+        return Ok(await subforumService.GetSubforumOverviewAsync());
     }
 
     [HttpGet("{subforumId:int}")]

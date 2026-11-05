@@ -1,7 +1,5 @@
 namespace ApiContracts;
 
-using Entities;
-
 public class DeleteReactionRequest
 {
     public required int UserId { get; set; }
