@@ -3,6 +3,7 @@ namespace Services;
 using Entities;
 using RepositoryContracts;
 using Exceptions;
+using ApiContracts;
 
 public class ReactionService
 {

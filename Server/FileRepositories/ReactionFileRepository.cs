@@ -2,6 +2,7 @@ namespace FileRepositories;
 
 using Entities;
 using RepositoryContracts;
+using ApiContracts;
 
 public class ReactionFileRepository : FileRepository<Reaction>, IReactionRepository
 {

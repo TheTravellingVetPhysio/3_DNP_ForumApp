@@ -3,7 +3,6 @@ namespace WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using ApiContracts;
-using Entities;
 
 [ApiController]
 [Route("api/reactions")]
@@ -27,7 +26,7 @@ public class ReactionController : ControllerBase
             request.ContentType,
             request.ReactionType);
 
-        return StatusCode(StatusCodes.Status201Created, reaction);
+        return StatusCode(StatusCodes.Status201Created);
     }
 
     // PUT: api/reactions

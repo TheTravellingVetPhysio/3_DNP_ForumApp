@@ -1,4 +1,5 @@
 using Entities;
+using ApiContracts;
 
 namespace RepositoryContracts;
 
