@@ -6,9 +6,9 @@ namespace BlazorApp.Services;
 public interface ICommentService
 {
     Task<List<CommentDetailsDTO>> GetCommentsAsync(
-        int? postId,
-        int? userId,
-        string? username);
+        int? postId = null,
+        int? userId = null,
+        string? username = null);
 
     Task CreateCommentAsync(CreateCommentRequest request);
 
