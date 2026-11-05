@@ -81,6 +81,18 @@ public class ReactionService
     public Task<Dictionary<ReactionType, int>> GetReactionCountsAsync(int contentId, ContentType contentType)
         => reactionRepository.GetReactionCountsAsync(contentId, contentType);
 
+
+    public Task<Reaction?> GetUserReactionAsync(
+        int userId,
+        int contentId,
+        ContentType contentType)
+    {
+        return reactionRepository.GetReactionByUserAndContentAsync(
+            userId,
+            contentId,
+            contentType);
+    }
+
     // Hjælpemetoder
     private async Task EnsureContentExistsAsync(
         int contentId,

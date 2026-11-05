@@ -1,0 +1,105 @@
+@page "/posts/{PostId:int}"
+
+@using ApiContracts
+@using BlazorApp.Services
+@using BlazorApp.Components.Shared
+
+@inject IPostService PostService
+@inject NavigationManager Navigation
+
+<PageTitle>@(post?.Title ?? "Post")</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading post...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else if (post != null)
+{
+    <div class="mb-3">
+        <a href="/">← Back to forums</a>
+    </div>
+
+    <article class="mb-4">
+        <h1>@post.Title</h1>
+
+        <p class="text-muted">
+            By
+            <a href="/users/@post.UserId">@post.Username</a>
+            · @post.CreatedAt.ToLocalTime().ToString("g")
+        </p>
+
+        <p>@post.Body</p>
+
+        <ReactionButtons ContentId="@post.PostId" ContentType="ContentType.Post" UserId="1"
+                         ReactionCounts="@post.ReactionCounts" />
+    </article>
+
+    <hr />
+
+    <h2>Comments</h2>
+
+    @if (post.Comments == null || post.Comments.Count == 0)
+    {
+        <p>No comments yet.</p>
+    }
+    else
+    {
+        @foreach (CommentDetailsDTO comment in post.Comments)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p>@comment.Body</p>
+
+                    <small class="text-muted">
+                        By
+                        <a href="/users/@comment.UserId">@comment.Username</a>
+                        · @comment.CreatedAt.ToLocalTime().ToString("g")
+                    </small>
+
+                    <ReactionButtons ContentId="@comment.CommentId" ContentType="ContentType.Comment" UserId="1"
+                                     ReactionCounts="@comment.ReactionCounts" />
+                </div>
+            </div>
+        }
+    }
+}
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+
+    private PostDetailsDTO? post;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            post = await PostService.GetPostDetailsByIdAsync(PostId);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not load the post. It may not exist.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+}

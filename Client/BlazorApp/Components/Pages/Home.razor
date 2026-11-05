@@ -1,7 +1,62 @@
 ﻿@page "/"
+@using ApiContracts
+@using BlazorApp.Services
+@inject ISubforumService SubforumService
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>ForumApp - Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Welcome to the best forum ever</h1>
 
-Welcome to your new app.
+@if (subforums == null)
+{
+    <p>Loading forums...</p>
+}
+else if (subforums.Count == 0)
+{
+
+    <p>No forums have been created yet.</p>
+}
+else
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Subforum</th>
+                <th>Latest activity</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (SubforumDTO subforum in subforums)
+            {
+                <tr>
+                    <td>@subforum.Name</td>
+                    <td>
+                        @(subforum.LastActivityAt?.ToLocalTime().ToString("g") ?? "No activity yet") </td>
+                        <td>
+                            <button class="btn btn-primary" @onclick="() => OpenSubforum(subforum.SubforumId)">
+                                Go to @subforum.Name </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+@code {
+    private List<SubforumDTO>? subforums;
+
+    protected override async Task OnInitializedAsync()
+    {
+        subforums = await SubforumService.GetAllSubforumsAsync();
+    }
+
+    private void OpenSubforum(int subforumId)
+    {
+        Navigation.NavigateTo($"/subforums/{subforumId}");
+    }
+
+
+}

@@ -70,4 +70,19 @@ public class ReactionController : ControllerBase
 
         return Ok(counts);
     }
+
+    // GET: api/reactions/user?userId=1&contentId=1&contentType=Post
+    [HttpGet("user")]
+    public async Task<ActionResult<ReactionType?>> GetUserReaction(
+        [FromQuery] int userId,
+        [FromQuery] int contentId,
+        [FromQuery] ContentType contentType)
+    {
+        var reaction = await reactionService.GetUserReactionAsync(
+            userId,
+            contentId,
+            contentType);
+
+        return Ok(reaction?.ReactionType);
+    }
 }

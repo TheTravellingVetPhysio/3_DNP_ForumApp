@@ -3,7 +3,7 @@ using ApiContracts;
 namespace BlazorApp.Services;
 
 public class HttpReactionService : IReactionService
-{ 
+{
     private readonly HttpClient httpClient;
 
     public HttpReactionService(HttpClient httpClient)
@@ -47,5 +47,17 @@ public class HttpReactionService : IReactionService
         HttpResponseMessage responseMessage = await httpClient.PutAsJsonAsync("api/reactions", request);
 
         responseMessage.EnsureSuccessStatusCode();
+    }
+
+    public async Task<ReactionType?> GetUserReactionAsync(
+        int userId,
+        int contentId,
+        ContentType contentType)
+    {
+        string uri = $"api/reactions/user?userId={userId}" +
+                     $"&contentId={contentId}" +
+                     $"&contentType={contentType}";
+
+        return await httpClient.GetFromJsonAsync<ReactionType?>(uri);
     }
 }

@@ -1,0 +1,139 @@
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject IReactionService ReactionService
+
+<div class="d-flex gap-2 align-items-center">
+    <button class="btn btn-sm @(currentReaction == ReactionType.Like ? "btn-primary" : "btn-outline-primary")"
+            disabled="@isLoading"
+            @onclick="() => HandleReactionAsync(ReactionType.Like)">
+        👍 Like (@GetReactionCount(ReactionType.Like))
+    </button>
+
+    <button class="btn btn-sm @(currentReaction == ReactionType.Dislike ? "btn-secondary" : "btn-outline-secondary")"
+            disabled="@isLoading"
+            @onclick="() => HandleReactionAsync(ReactionType.Dislike)">
+        👎 Dislike (@GetReactionCount(ReactionType.Dislike))
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <small class="text-danger">@errorMessage</small>
+}
+
+@code {
+    [Parameter]
+    public int ContentId { get; set; }
+
+    [Parameter]
+    public ContentType ContentType { get; set; }
+
+    [Parameter]
+    public int UserId { get; set; }
+
+    [Parameter]
+    public Dictionary<ReactionType, int> ReactionCounts { get; set; } = [];
+
+    private ReactionType? currentReaction;
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadUserReactionAsync();
+    }
+
+    private async Task LoadUserReactionAsync()
+    {
+        try
+        {
+            currentReaction = await ReactionService.GetUserReactionAsync(
+                UserId,
+                ContentId,
+                ContentType);
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not load your reaction.";
+        }
+    }
+
+    private async Task HandleReactionAsync(ReactionType selectedReaction)
+    {
+        if (isLoading)
+            return;
+
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            if (currentReaction == selectedReaction)
+            {
+                // Clicking the selected reaction removes it.
+                await ReactionService.RemoveReactionAsync(
+                    new DeleteReactionRequest
+                    {
+                        UserId = UserId,
+                        ContentId = ContentId,
+                        ContentType = ContentType
+                    });
+
+                currentReaction = null;
+                ReactionCounts[selectedReaction]--;
+            }
+            else if (currentReaction.HasValue)
+            {
+                // Switch between Like and Dislike.
+                await ReactionService.UpdateReactionAsync(
+                    new UpdateReactionRequest
+                    {
+                        UserId = UserId,
+                        ContentId = ContentId,
+                        ContentType = ContentType,
+                        ReactionType = selectedReaction
+                    });
+
+                ReactionCounts[currentReaction.Value] =
+                    GetReactionCount(currentReaction.Value) - 1;
+
+                ReactionCounts[selectedReaction] =
+                    GetReactionCount(selectedReaction) + 1;
+
+                currentReaction = selectedReaction;
+            }
+            else
+            {
+                // Create a new reaction.
+                await ReactionService.AddReactionAsync(
+                    new CreateReactionRequest
+                    {
+                        UserId = UserId,
+                        ContentId = ContentId,
+                        ContentType = ContentType,
+                        ReactionType = selectedReaction
+                    });
+
+                currentReaction = selectedReaction;
+                ReactionCounts[selectedReaction] =
+                    GetReactionCount(selectedReaction) + 1;
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not update your reaction.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private int GetReactionCount(ReactionType type)
+    {
+        return ReactionCounts.TryGetValue(type, out int count)
+            ? count
+            : 0;
+    }
+}

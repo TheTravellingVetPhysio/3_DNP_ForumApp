@@ -1,0 +1,124 @@
+@page "/subforums/{SubforumId:int}"
+
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject ISubforumService SubforumService
+@inject IPostService PostService
+@inject NavigationManager Navigation
+
+<PageTitle>@(subforum?.Name ?? "Subforum")</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading subforum...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else if (subforum != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1>@subforum.Name</h1>
+            <a href="/">← Back to forums</a>
+        </div>
+
+        <button class="btn btn-primary"
+                @onclick="CreatePost">
+            Create post
+        </button>
+    </div>
+
+    <h3>Posts</h3>
+
+    @if (posts == null || posts.Count == 0)
+    {
+        <p>No posts in this forum yet.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Created</th>
+                    <th>Latest activity</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (PostOverviewDTO post in posts)
+                {
+                    <tr>
+                        <td>@post.Title</td>
+                        <td>
+                            <a href="/users/@post.UserId">
+                                @post.Username
+                            </a>
+                        </td>
+                        <td>@post.CreatedAt.ToLocalTime().ToString("g")</td>
+                        <td>@post.LastActivityAt.ToLocalTime().ToString("g")</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm"
+                                    @onclick="() => OpenPost(post.PostId)">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter]
+    public int SubforumId { get; set; }
+
+    private SubforumDTO? subforum;
+    private List<PostOverviewDTO>? posts;
+
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            subforum = await SubforumService.GetSubforumByIdAsync(SubforumId);
+
+            posts = await PostService.GetPostsAsync(
+                subforumId: SubforumId);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not load the subforum. It may not exist.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred while loading the subforum.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenPost(int postId)
+    {
+        Navigation.NavigateTo($"/posts/{postId}");
+    }
+
+    private void CreatePost()
+    {
+        Navigation.NavigateTo($"/posts/create?subforumId={SubforumId}");
+    }
+}
