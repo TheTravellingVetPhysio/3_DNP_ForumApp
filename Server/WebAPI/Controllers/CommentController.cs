@@ -3,7 +3,6 @@ namespace WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using ApiContracts;
-using Entities;
 
 [ApiController]
 [Route("api/comments")]
@@ -33,18 +32,17 @@ public class CommentController : ControllerBase
 
     // POST: api/comments
     [HttpPost]
-    public async Task<ActionResult<Comment>> CreateComment(
+    public async Task<IActionResult> CreateComment(
         [FromBody] CreateCommentRequest request)
     {
-        var comment = await commentService.CreateCommentAsync(
+        await commentService.CreateCommentAsync(
             request.Body,
             request.UserId,
             request.PostId,
             request.ParentCommentId);
 
         return StatusCode(
-            StatusCodes.Status201Created,
-            comment);
+            StatusCodes.Status201Created);
     }
 
     // PUT: api/comments/1
