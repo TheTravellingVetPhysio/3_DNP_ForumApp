@@ -161,6 +161,7 @@ public class PostFileRepository : FileRepository<Post>, IPostRepository
             Body = post.Body,
             UserId = post.UserId,
             Username = postUser.Username,
+            SubforumId = post.SubforumId,
             CreatedAt = post.Timestamp,
             ReactionCounts = reactionCounts,
             Comments = commentDetails
