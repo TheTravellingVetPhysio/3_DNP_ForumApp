@@ -1,0 +1,114 @@
+@page "/users/{UserId:int}"
+
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject IUserService UserService
+@inject IPostService PostService
+@inject ICommentService CommentService
+
+<PageTitle>@(user?.Username ?? "User")</PageTitle>
+
+@if (isLoading)
+{
+    <p>Loading user...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else if (user != null)
+{
+    <h1 class="mt-3">@user.Username</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>User information</h5>
+            <p><strong>Username:</strong> @user.Username</p>
+        </div>
+    </div>
+
+    <h2>Posts</h2>
+
+    @if (posts.Count == 0)
+    {
+        <p>This user has not created any posts.</p>
+    }
+    else
+    {
+        <div class="list-group mb-4">
+            @foreach (var post in posts)
+            {
+                <a href="/posts/@post.PostId"
+                   class="list-group-item list-group-item-action">
+                    <h5>@post.Title</h5>
+                    <small>Created: @post.CreatedAt</small>
+                </a>
+            }
+        </div>
+    }
+
+    <h2>Comments</h2>
+
+    @if (comments.Count == 0)
+    {
+        <p>This user has not written any comments.</p>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var comment in comments)
+            {
+                <div class="list-group-item">
+                    <p>@comment.Body</p>
+                    <small>Created: @comment.CreatedAt</small>
+
+                    <div>
+                        <a href="/posts/@comment.PostId">
+                            View post
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    private UserDTO? user;
+    private List<PostOverviewDTO> posts = [];
+    private List<CommentDetailsDTO> comments = [];
+
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            user = await UserService.GetUserByIdAsync(UserId);
+
+            posts = await PostService.GetPostsAsync(userId: UserId);
+
+            comments = await CommentService.GetCommentsAsync(userId: UserId);
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not load user information.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

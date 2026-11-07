@@ -90,6 +90,7 @@ public class CommentFileRepository : FileRepository<Comment>, ICommentRepository
             result.Add(new CommentDetailsDTO
             {
                 CommentId = comment.ContentId,
+                PostId = comment.PostId,
                 Body = comment.Body,
                 UserId = comment.UserId,
                 Username = user.Username,
