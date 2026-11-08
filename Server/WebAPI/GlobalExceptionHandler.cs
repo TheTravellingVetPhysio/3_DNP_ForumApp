@@ -22,6 +22,7 @@ public class GlobalExceptionHandler(
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             ResourceNotFoundException => StatusCodes.Status404NotFound,
             BusinessConflictException => StatusCodes.Status409Conflict,
+            ForbiddenAccessException => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError
         };
 
@@ -34,6 +35,7 @@ public class GlobalExceptionHandler(
             {
                 StatusCodes.Status400BadRequest => "Bad Request",
                 StatusCodes.Status401Unauthorized => "Unauthorized",
+                StatusCodes.Status403Forbidden => "Forbidden",
                 StatusCodes.Status404NotFound => "Not Found",
                 StatusCodes.Status409Conflict => "Conflict",
                 _ => "Internal Server Error"

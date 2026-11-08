@@ -51,17 +51,23 @@ public class PostService
         return await postRepository.AddAsync(post);
     }
 
-    public async Task UpdatePostAsync(int postId, string newTitle, string newBody)
+    public async Task UpdatePostAsync(int postId, string newTitle, string newBody, int currentUserId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(newTitle);
         ArgumentException.ThrowIfNullOrWhiteSpace(newBody);
 
         Post post = await postRepository.GetSingleAsync(postId);
 
+        if (post.UserId != currentUserId)
+        {
+            throw new ForbiddenAccessException(
+                "You do now have access to alter this post.");
+        }
+
         TimeSpan timeSinceCreation = DateTimeOffset.UtcNow - post.Timestamp;
         if (timeSinceCreation > TimeSpan.FromHours(24))
         {
-            throw new BusinessConflictException("Posten kan ikke længere redigeres, da den er mere end 24 timer gammel.");
+            throw new BusinessConflictException("The post cannot be changed since it is older than 24 hours.");
         }
 
         post.Title = newTitle;
@@ -70,21 +76,26 @@ public class PostService
         await postRepository.UpdateAsync(post);
     }
 
-    public async Task DeletePostAsync(int postId)
+    public async Task DeletePostAsync(int postId, int currentUserId, bool isAdmin)
     {
-        await postRepository.GetSingleAsync(postId);
+        Post post = await postRepository.GetSingleAsync(postId);
 
-        int commentCount = await commentRepository.GetCommentCountByPostIdAsync(postId);
-
-        if (commentCount == 0)
+        if (post.UserId != currentUserId && !isAdmin)
         {
-            await postRepository.DeleteAsync(postId);
-        }
-        else
-        {
-            throw new BusinessConflictException("Indlægget kan ikke slettes, da det indeholder kommentarer.");
+            throw new ForbiddenAccessException(
+                "You do not have access to delete this post.");
         }
 
+        int commentCount =
+            await commentRepository.GetCommentCountByPostIdAsync(postId);
+
+        if (commentCount > 0 && !isAdmin)
+        {
+            throw new BusinessConflictException(
+                "The post can't be deleted, as it contains comments.");
+        }
+
+        await postRepository.DeleteAsync(postId);
     }
 
     // Getters

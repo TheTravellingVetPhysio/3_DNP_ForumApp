@@ -4,6 +4,8 @@ namespace WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using ApiContracts;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/posts")]
@@ -42,6 +44,7 @@ public class PostController : ControllerBase
     }
 
     // POST: api/posts
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<PostDetailsDTO>> CreatePost(
         [FromBody] CreatePostRequest request)
@@ -61,24 +64,35 @@ public class PostController : ControllerBase
     }
 
     // PUT: api/posts/1
-     [HttpPut("{postId:int}")]
+    [Authorize]
+    [HttpPut("{postId:int}")]
     public async Task<IActionResult> UpdatePost(
         int postId,
         [FromBody] UpdatePostRequest request)
     {
+        int userId = int.Parse(
+        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
         await postService.UpdatePostAsync(
             postId,
             request.Title,
-            request.Body);
+            request.Body,
+            userId);
 
         return NoContent();
     }
 
     // DELETE: api/posts/1
+    [Authorize]
     [HttpDelete("{postId:int}")]
     public async Task<IActionResult> DeletePost(int postId)
     {
-        await postService.DeletePostAsync(postId);
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        bool isAdmin = User.IsInRole("Admin");
+
+        await postService.DeletePostAsync(postId, userId, isAdmin);
         return NoContent();
     }
 }

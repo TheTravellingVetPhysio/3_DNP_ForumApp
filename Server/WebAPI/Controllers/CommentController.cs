@@ -3,6 +3,7 @@ namespace WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using ApiContracts;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/comments")]
@@ -31,6 +32,7 @@ public class CommentController : ControllerBase
     }
 
     // POST: api/comments
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateComment(
         [FromBody] CreateCommentRequest request)
@@ -46,6 +48,7 @@ public class CommentController : ControllerBase
     }
 
     // PUT: api/comments/1
+    [Authorize]
     [HttpPut("{commentId:int}")]
     public async Task<IActionResult> UpdateComment(
         int commentId,
