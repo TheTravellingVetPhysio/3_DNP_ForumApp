@@ -1,0 +1,101 @@
+@page "/login"
+
+@using BlazorApp.Services
+@using System.ComponentModel.DataAnnotations
+
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<div class="container mt-5" style="max-width: 450px;">
+    <h2 class="mb-4">Login</h2>
+
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <InputText id="username"
+                   class="form-control"
+                   @bind-Value="loginModel.Username" />
+        <ValidationMessage For="() => loginModel.Username" />
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <InputText id="password"
+                   type="password"
+                   class="form-control"
+                   @bind-Value="loginModel.Password" />
+        <ValidationMessage For="() => loginModel.Password" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit"
+            class="btn btn-primary w-100"
+            disabled="@isLoading">
+        @(isLoading ? "Logging in..." : "Login")
+    </button>
+</EditForm>
+
+
+</div>
+
+@code {
+private LoginModel loginModel = new();
+private string? errorMessage;
+private bool isLoading;
+
+private async Task HandleLogin()
+{
+    errorMessage = null;
+    isLoading = true;
+
+    try
+    {
+        bool success = await AuthenticationService.LoginAsync(
+            loginModel.Username,
+            loginModel.Password);
+
+        if (success)
+        {
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = "Invalid username or password.";
+        }
+    }
+    catch (HttpRequestException ex)
+    {
+        Console.WriteLine(ex.ToString());
+        errorMessage = ex.Message;
+    }
+    catch (Exception)
+    {
+        errorMessage = "An unexpected error occurred.";
+    }
+    finally
+    {
+        isLoading = false;
+    }
+}
+
+private class LoginModel
+{
+    [Required]
+    public string Username { get; set; } = "";
+
+    [Required]
+    public string Password { get; set; } = "";
+}
+
+}

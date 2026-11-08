@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using ApiContracts;
 
 namespace BlazorApp.Services;
@@ -12,6 +11,7 @@ public class AuthenticationService(HttpClient httpClient)
     public int? UserId { get; private set; }
     public string? Username { get; private set; }
     public UserRole? Role { get; private set; }
+    public event Action? AuthenticationStateChanged;
 
     public bool IsAuthenticated => !string.IsNullOrEmpty(Token);
 
@@ -55,6 +55,8 @@ public class AuthenticationService(HttpClient httpClient)
         httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", Token);
 
+        AuthenticationStateChanged?.Invoke();
+
         return true;
     }
 
@@ -66,5 +68,7 @@ public class AuthenticationService(HttpClient httpClient)
         Role = null;
 
         httpClient.DefaultRequestHeaders.Authorization = null;
+
+        AuthenticationStateChanged?.Invoke();
     }
 }

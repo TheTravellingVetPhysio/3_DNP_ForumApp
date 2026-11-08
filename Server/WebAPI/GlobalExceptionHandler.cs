@@ -1,17 +1,21 @@
-
 namespace WebAPI;
 
 using Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-public class GlobalExceptionHandler : IExceptionHandler
+public class GlobalExceptionHandler(
+    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
+        logger.LogError(
+            exception,
+            "An unexpected error occurred while processing the request.");
+
         int statusCode = exception switch
         {
             ArgumentException => StatusCodes.Status400BadRequest,
