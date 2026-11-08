@@ -4,6 +4,9 @@ using Services;
 using WebAPI;
 using Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,14 +27,49 @@ builder.Services.AddScoped<ICommentRepository, CommentFileRepository>();
 builder.Services.AddScoped<IReactionRepository, ReactionFileRepository>();
 builder.Services.AddScoped<ISubforumRepository, SubforumFileRepository>();
 
-// Register services
+// Register secutiry services
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IPasswordHasher, AspNetPasswordHasher>();
+builder.Services.AddScoped<JwtTokenService>();
+
+// Register application services
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<ReactionService>();
 builder.Services.AddScoped<SubforumService>();
+
+// Configure JWT authentication
+var secretKey = builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("JWT SecretKey is missing.");
+
+var jwtKey = new SymmetricSecurityKey(
+    Convert.FromBase64String(secretKey));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            ValidateLifetime = true,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = jwtKey,
+
+            ClockSkew = TimeSpan.Zero,
+
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -44,6 +82,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -18,6 +18,7 @@ builder.Services.AddScoped<IPostService, HttpPostService>();
 builder.Services.AddScoped<ICommentService, HttpCommentService>();
 builder.Services.AddScoped<ISubforumService, HttpSubforumService>();
 builder.Services.AddScoped<IReactionService, HttpReactionService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 var app = builder.Build();
 
