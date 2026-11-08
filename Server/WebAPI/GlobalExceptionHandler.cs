@@ -15,6 +15,7 @@ public class GlobalExceptionHandler : IExceptionHandler
         int statusCode = exception switch
         {
             ArgumentException => StatusCodes.Status400BadRequest,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             ResourceNotFoundException => StatusCodes.Status404NotFound,
             BusinessConflictException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
@@ -28,6 +29,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             Title = statusCode switch
             {
                 StatusCodes.Status400BadRequest => "Bad Request",
+                StatusCodes.Status401Unauthorized => "Unauthorized",
                 StatusCodes.Status404NotFound => "Not Found",
                 StatusCodes.Status409Conflict => "Conflict",
                 _ => "Internal Server Error"

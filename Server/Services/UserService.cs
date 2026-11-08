@@ -8,9 +8,14 @@ public class UserService
 {
     private readonly IUserRepository userRepository;
 
-    public UserService(IUserRepository userRepository)
+    private readonly IPasswordHasher passwordHasher;
+
+    public UserService(
+        IUserRepository userRepository, 
+        IPasswordHasher passwordHasher)
     {
         this.userRepository = userRepository;
+        this.passwordHasher = passwordHasher;
     }
 
     // CRUD
@@ -33,7 +38,9 @@ public class UserService
             throw new BusinessConflictException($"Brugernavnet '{username}' er allerede taget.");
         }
 
-        User user = new User { Username = username, Password = password };
+        User user = new User { Username = username, PasswordHash = "" };
+        
+        user.PasswordHash = passwordHasher.HashPassword(user, password);
         return await userRepository.AddAsync(user);
     }
 
@@ -48,4 +55,26 @@ public class UserService
     {
         await userRepository.GetSingleAsync(userId);
     }
+
+    // Authentication and authorization
+    public async Task<User> LoginAsync(string username, string password)
+    {
+        User? user = await userRepository.GetUserByUsernameAsync(username);
+
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Wrong username or password.");
+        }
+
+        bool passwordValid = passwordHasher.VerifyPassword(
+            user, user.PasswordHash, password);
+
+        if (!passwordValid)
+        {
+            throw new UnauthorizedAccessException("Wrong username or password.");
+        }
+
+        return user;
+    }
+
 }

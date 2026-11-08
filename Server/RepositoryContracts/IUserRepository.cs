@@ -6,4 +6,5 @@ public interface IUserRepository : IRepository<User>
 {
     Task<bool> UsernameExistsAsync(string username);
     Task<List<User>> GetUsersAsync(string? username);
+    Task<User?> GetUserByUsernameAsync(string username);
 }

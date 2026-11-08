@@ -36,4 +36,12 @@ public class UserFileRepository : FileRepository<User>, IUserRepository
         return users;
     }
 
+    public async Task<User?> GetUserByUsernameAsync(string username)
+    {
+        List<User> users = await GetManyAsync();
+
+        return users.FirstOrDefault(u =>
+            u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+    }
+
 }

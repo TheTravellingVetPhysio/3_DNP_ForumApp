@@ -2,6 +2,8 @@ using FileRepositories;
 using RepositoryContracts;
 using Services;
 using WebAPI;
+using Entities;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,8 @@ builder.Services.AddScoped<IReactionRepository, ReactionFileRepository>();
 builder.Services.AddScoped<ISubforumRepository, SubforumFileRepository>();
 
 // Register services
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IPasswordHasher, AspNetPasswordHasher>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<CommentService>();
