@@ -3,6 +3,8 @@ namespace WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using ApiContracts;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/reactions")]
@@ -16,12 +18,16 @@ public class ReactionController : ControllerBase
     }
 
     // POST: api/reactions
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> AddReaction(
         [FromBody] CreateReactionRequest request)
     {
-        var reaction = await reactionService.AddReactionAsync(
-            request.UserId,
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        await reactionService.AddReactionAsync(
+            userId,
             request.ContentId,
             request.ContentType,
             request.ReactionType);
@@ -30,12 +36,16 @@ public class ReactionController : ControllerBase
     }
 
     // PUT: api/reactions
+    [Authorize]
     [HttpPut]
     public async Task<IActionResult> UpdateReaction(
         [FromBody] UpdateReactionRequest request)
     {
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         await reactionService.UpdateReactionAsync(
-            request.UserId,
+            userId,
             request.ContentId,
             request.ContentType,
             request.ReactionType);
@@ -44,12 +54,16 @@ public class ReactionController : ControllerBase
     }
 
     // DELETE: api/reactions
+    [Authorize]
     [HttpDelete]
     public async Task<IActionResult> RemoveReaction(
         [FromBody] DeleteReactionRequest request)
     {
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            
         await reactionService.RemoveReactionAsync(
-            request.UserId,
+            userId,
             request.ContentId,
             request.ContentType);
 
