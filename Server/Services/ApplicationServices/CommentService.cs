@@ -52,16 +52,22 @@ public class CommentService
         return await commentRepository.AddAsync(comment);
     }
 
-    public async Task UpdateCommentAsync(int commentId, string newBody)
+    public async Task UpdateCommentAsync(int commentId, int currentUserId, bool isAdmin, string newBody)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(newBody);
 
         Comment comment = await commentRepository.GetSingleAsync(commentId);
 
-        TimeSpan timeSinceCreation = DateTimeOffset.UtcNow - comment.Timestamp;
-        if (timeSinceCreation > TimeSpan.FromHours(24))
+        if (comment.UserId != currentUserId && !isAdmin)
         {
-            throw new BusinessConflictException("Kommentaren kan ikke længere redigeres, da den er mere end 24 timer gammel.");
+            throw new ForbiddenAccessException(
+                "You do not have access to edit this comment.");
+        }
+
+        TimeSpan timeSinceCreation = DateTimeOffset.UtcNow - comment.Timestamp;
+        if (timeSinceCreation > TimeSpan.FromHours(24) && !isAdmin)
+        {
+            throw new BusinessConflictException("The comment can no longer be edited, as it is more than 24 hours old.");
         }
 
         comment.Body = newBody;

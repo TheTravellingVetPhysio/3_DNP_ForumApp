@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Services;
 using ApiContracts;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/comments")]
@@ -37,9 +38,12 @@ public class CommentController : ControllerBase
     public async Task<IActionResult> CreateComment(
         [FromBody] CreateCommentRequest request)
     {
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
         await commentService.CreateCommentAsync(
             request.Body,
-            request.UserId,
+            userId,
             request.PostId,
             request.ParentCommentId);
 
@@ -54,8 +58,15 @@ public class CommentController : ControllerBase
         int commentId,
         [FromBody] UpdateCommentRequest request)
     {
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        bool isAdmin = User.IsInRole("Admin");
+        
         await commentService.UpdateCommentAsync(
             commentId,
+            userId,
+            isAdmin,
             request.Body);
 
         return NoContent();
