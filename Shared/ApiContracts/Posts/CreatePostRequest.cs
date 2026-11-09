@@ -13,8 +13,5 @@ public class CreatePostRequest
     public string Body { get; set; } = "";
 
     [Range(1, int.MaxValue)]
-    public int UserId { get; set; }
-
-    [Range(1, int.MaxValue)]
     public int SubforumId { get; set; }
 }

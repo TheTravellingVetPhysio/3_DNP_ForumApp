@@ -51,21 +51,21 @@ public class PostService
         return await postRepository.AddAsync(post);
     }
 
-    public async Task UpdatePostAsync(int postId, string newTitle, string newBody, int currentUserId)
+    public async Task UpdatePostAsync(int postId, string newTitle, string newBody, int currentUserId, bool isAdmin)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(newTitle);
         ArgumentException.ThrowIfNullOrWhiteSpace(newBody);
 
         Post post = await postRepository.GetSingleAsync(postId);
 
-        if (post.UserId != currentUserId)
+        if (post.UserId != currentUserId && !isAdmin)
         {
             throw new ForbiddenAccessException(
                 "You do now have access to alter this post.");
         }
 
         TimeSpan timeSinceCreation = DateTimeOffset.UtcNow - post.Timestamp;
-        if (timeSinceCreation > TimeSpan.FromHours(24))
+        if (timeSinceCreation > TimeSpan.FromHours(24) && !isAdmin)
         {
             throw new BusinessConflictException("The post cannot be changed since it is older than 24 hours.");
         }

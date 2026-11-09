@@ -49,10 +49,13 @@ public class PostController : ControllerBase
     public async Task<ActionResult<PostDetailsDTO>> CreatePost(
         [FromBody] CreatePostRequest request)
     {
+        int userId = int.Parse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var post = await postService.CreatePostAsync(
             request.Title,
             request.Body,
-            request.UserId,
+            userId,
             request.SubforumId);
 
         var result = await postService.GetPostDetailsAsync(post.ContentId);
@@ -71,13 +74,16 @@ public class PostController : ControllerBase
         [FromBody] UpdatePostRequest request)
     {
         int userId = int.Parse(
-        User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        bool isAdmin = User.IsInRole("Admin");
         
         await postService.UpdatePostAsync(
             postId,
             request.Title,
             request.Body,
-            userId);
+            userId,
+            isAdmin);
 
         return NoContent();
     }
