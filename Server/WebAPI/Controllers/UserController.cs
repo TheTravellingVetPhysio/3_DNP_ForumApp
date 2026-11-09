@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Services;
 using Mappers;
 using ApiContracts;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/users")]
@@ -18,6 +19,7 @@ public class UserController : ControllerBase
     }
 
     // GET: api/users?username=ann
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<List<UserDTO>>> GetAllUsers(
         [FromQuery] string? username)
@@ -30,6 +32,7 @@ public class UserController : ControllerBase
     }
 
     // GET: api/users/1
+    [Authorize]
     [HttpGet("{userId:int}")]
     public async Task<ActionResult<UserDTO>> GetUserById(int userId)
     {

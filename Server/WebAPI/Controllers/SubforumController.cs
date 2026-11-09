@@ -40,7 +40,7 @@ public class SubforumController : ControllerBase
         [FromBody] CreateSubforumRequest request)
     {
         int userId = int.Parse(
-            User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var subforum = await subforumService.CreateSubforumAsync(
             request.Name,
