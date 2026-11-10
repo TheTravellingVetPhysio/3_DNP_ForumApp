@@ -1,1 +1,95 @@
-@attribute [Authorize]
+@page "/subforums/create"
+@attribute [Authorize(Roles = "Admin")]
+
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject ISubforumService SubforumService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Subforum</PageTitle>
+
+<h1>Create Subforum</h1>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage 
+    </div>
+}
+
+<EditForm Model="request" OnValidSubmit="SubmitSubforum">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="name" class="form-label">Subforum name</label>
+        <InputText id="name"
+                class="form-control"
+                @bind-Value="request.Name" />
+        <ValidationMessage For="@(() => request.Name)" />
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary"
+            disabled="@isSubmitting">
+        @(isSubmitting ? "Creating..." : "Create Subforum")
+    </button>
+
+    <button type="button"
+            class="btn btn-secondary ms-2"
+            @onclick="Cancel">
+        Cancel
+    </button>
+
+</EditForm>
+
+@code {
+    private CreateSubforumRequest request = new()
+    {
+        Name = ""
+    };
+
+    private bool isSubmitting;
+    private string? errorMessage;
+
+    private async Task SubmitSubforum()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await SubforumService.CreateSubforumAsync(request);
+
+            Navigation.NavigateTo("/");
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized =>
+                    "Your session has expired. Please log in again.",
+
+                System.Net.HttpStatusCode.Forbidden =>
+                    "You are not allowed to create subforums.",
+
+                _ => "Could not communicate with the server."
+            };
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not create subforum. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+}

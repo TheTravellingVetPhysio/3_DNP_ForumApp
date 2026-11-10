@@ -8,6 +8,15 @@
 
 <h1>Welcome to the best forum ever</h1>
 
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <button class="btn btn-primary mb-3"
+                @onclick="CreateSubforum">
+            Create Subforum
+        </button>
+    </Authorized>
+</AuthorizeView>
+
 @if (subforums == null)
 {
     <p>Loading forums...</p>
@@ -56,6 +65,11 @@ else
     private void OpenSubforum(int subforumId)
     {
         Navigation.NavigateTo($"/subforums/{subforumId}");
+    }
+
+    private void CreateSubforum()
+    {
+        Navigation.NavigateTo("/subforums/create");
     }
 
 
