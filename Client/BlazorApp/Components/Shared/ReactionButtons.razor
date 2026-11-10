@@ -1,21 +1,38 @@
+@implements IDisposable
+
 @using ApiContracts
 @using BlazorApp.Services
+@using Microsoft.AspNetCore.Components.Authorization
 
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IReactionService ReactionService
 
-<div class="d-flex gap-2 align-items-center">
-    <button class="btn btn-sm @(currentReaction == ReactionType.Like ? "btn-primary" : "btn-outline-primary")"
-            disabled="@isLoading"
-            @onclick="() => HandleReactionAsync(ReactionType.Like)">
-        👍 Like (@GetReactionCount(ReactionType.Like))
-    </button>
-
-    <button class="btn btn-sm @(currentReaction == ReactionType.Dislike ? "btn-secondary" : "btn-outline-secondary")"
-            disabled="@isLoading"
-            @onclick="() => HandleReactionAsync(ReactionType.Dislike)">
-        👎 Dislike (@GetReactionCount(ReactionType.Dislike))
-    </button>
-</div>
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-sm @(currentReaction == ReactionType.Like ? "btn-primary" : "btn-outline-secondary")"
+                    disabled="@isLoading"
+                    @onclick="() => HandleReactionAsync(ReactionType.Like)">
+                👍 (@GetReactionCount(ReactionType.Like))
+            </button>
+            <button class="btn btn-sm @(currentReaction == ReactionType.Dislike ? "btn-primary" : "btn-outline-secondary")"
+                    disabled="@isLoading"
+                    @onclick="() => HandleReactionAsync(ReactionType.Dislike)">
+                👎 (@GetReactionCount(ReactionType.Dislike))
+            </button>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-sm btn-outline-secondary" disabled>
+                👍 (@GetReactionCount(ReactionType.Like))
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" disabled>
+                👎 (@GetReactionCount(ReactionType.Dislike))
+            </button>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
@@ -30,9 +47,6 @@
     public ContentType ContentType { get; set; }
 
     [Parameter]
-    public int UserId { get; set; }
-
-    [Parameter]
     public Dictionary<ReactionType, int> ReactionCounts { get; set; } = [];
 
     private ReactionType? currentReaction;
@@ -41,19 +55,63 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        await LoadUserReactionAsync();
+        await LoadUserReactionAsync(
+                await AuthenticationStateProvider.GetAuthenticationStateAsync());
     }
 
-    private async Task LoadUserReactionAsync()
+    protected override void OnInitialized()
     {
+        AuthenticationStateProvider.AuthenticationStateChanged +=
+            OnAuthenticationStateChanged;
+    }
+
+    private async void OnAuthenticationStateChanged(
+        Task<AuthenticationState> authenticationStateTask)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadUserReactionAsync(await authenticationStateTask);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        AuthenticationStateProvider.AuthenticationStateChanged -=
+            OnAuthenticationStateChanged;
+    }
+
+    private async Task LoadUserReactionAsync(AuthenticationState authState)
+    {
+        currentReaction = null;
+        errorMessage = null;
+
+        if (authState.User.Identity?.IsAuthenticated is not true)
+            return;
+        
         try
         {
             currentReaction = await ReactionService.GetUserReactionAsync(
-                UserId,
                 ContentId,
                 ContentType);
         }
-        catch (Exception)
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized =>
+                    "Your session has expired. Please log in again.",
+
+                System.Net.HttpStatusCode.Forbidden =>
+                    "You are not allowed to view this reaction.",
+
+                System.Net.HttpStatusCode.NotFound =>
+                    "The requested content could not be found.",
+
+                _ => "Could not communicate with the server."
+            };
+        }
+                catch (Exception)
         {
             errorMessage = "Could not load your reaction.";
         }
@@ -75,7 +133,6 @@
                 await ReactionService.RemoveReactionAsync(
                     new DeleteReactionRequest
                     {
-                        UserId = UserId,
                         ContentId = ContentId,
                         ContentType = ContentType
                     });
@@ -89,7 +146,6 @@
                 await ReactionService.UpdateReactionAsync(
                     new UpdateReactionRequest
                     {
-                        UserId = UserId,
                         ContentId = ContentId,
                         ContentType = ContentType,
                         ReactionType = selectedReaction
@@ -109,7 +165,6 @@
                 await ReactionService.AddReactionAsync(
                     new CreateReactionRequest
                     {
-                        UserId = UserId,
                         ContentId = ContentId,
                         ContentType = ContentType,
                         ReactionType = selectedReaction

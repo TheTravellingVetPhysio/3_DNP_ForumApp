@@ -12,11 +12,7 @@
 
 <h1>Create Post</h1>
 
-@if (isLoading)
-{
-    <p>Loading...</p>
-}
-else if (errorMessage != null)
+@if (errorMessage != null)
 {
     <div class="alert alert-danger">
         @errorMessage
@@ -59,13 +55,16 @@ else
 
 @code {
     private CreatePostRequest request = new();
-
-    private bool isLoading = true;
     private bool isSubmitting;
     private string? errorMessage;
 
     [Parameter]
     public int SubforumId { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        request.SubforumId = SubforumId;
+    }
 
     private async Task SubmitPost()
     {
@@ -91,13 +90,6 @@ else
 
     private void Cancel()
     {
-        if (request.SubforumId > 0)
-        {
-            Navigation.NavigateTo($"/subforums/{request.SubforumId}");
-        }
-        else
-        {
-            Navigation.NavigateTo("/");
-        }
+        Navigation.NavigateTo($"/subforums/{SubforumId}");
     }
 }

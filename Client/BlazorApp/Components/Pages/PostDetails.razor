@@ -36,7 +36,7 @@ else if (post != null)
 
         <p>@post.Body</p>
 
-        <ReactionButtons ContentId="@post.PostId" ContentType="ContentType.Post" UserId="1"
+        <ReactionButtons ContentId="@post.PostId" ContentType="ContentType.Post"
                          ReactionCounts="@post.ReactionCounts" />
     </article>
 
@@ -46,28 +46,26 @@ else if (post != null)
 
     @if (post.Comments == null || post.Comments.Count == 0)
     {
-        <p>No comments yet.</p>
+        <p>No comments yet. Be the first to comment!</p>
     }
     else
     {
-        @foreach (CommentDetailsDTO comment in post.Comments)
+        @foreach (CommentDetailsDTO comment in post.Comments
+            .Where(c => c.ParentCommentId == null))
         {
-            <div class="card mb-3">
-                <div class="card-body">
-                    <p>@comment.Body</p>
-
-                    <small class="text-muted">
-                        By
-                        <a href="/users/@comment.UserId">@comment.Username</a>
-                        · @comment.CreatedAt.ToLocalTime().ToString("g")
-                    </small>
-
-                    <ReactionButtons ContentId="@comment.CommentId" ContentType="ContentType.Comment" UserId="1"
-                                     ReactionCounts="@comment.ReactionCounts" />
-                </div>
-            </div>
+            <CommentThread Comment="comment"
+                        AllComments="post.Comments"
+                        PostId="PostId"
+                        OnCommentCreated="ReloadPostAsync" />
         }
     }
+
+    <div class="mt-4">
+        <h4>Write a comment</h4>
+
+        <CreateComment PostId="@PostId"
+                    OnCommentCreated="ReloadPostAsync" />
+    </div>
 }
 
 @code {
@@ -100,6 +98,22 @@ else if (post != null)
         {
             isLoading = false;
         }
+    }
+
+    private HashSet<int> visibleReplyForms = [];
+
+    private void ToggleReplyForm(int commentId)
+    {
+        if (!visibleReplyForms.Add(commentId))
+        {
+            visibleReplyForms.Remove(commentId);
+        }
+    }
+
+    private async Task ReloadPostAsync()
+    {
+        post = await PostService.GetPostDetailsByIdAsync(PostId);
+        visibleReplyForms.Clear();
     }
 
 }

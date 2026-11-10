@@ -12,5 +12,5 @@ public interface IReactionService
 
     Task<Dictionary<ReactionType, int>> GetReactionCountsAsync(int contentId, ContentType contentType);
 
-    Task<ReactionType?> GetUserReactionAsync(int userId, int contentId, ContentType contentType);
+    Task<ReactionType?> GetUserReactionAsync(int contentId, ContentType contentType);
 }

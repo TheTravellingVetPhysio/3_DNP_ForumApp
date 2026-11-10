@@ -1,0 +1,91 @@
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject ICommentService CommentService
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{ <div class="alert alert-danger" role="alert">
+@errorMessage </div>
+}
+
+<EditForm Model="request" OnValidSubmit="SubmitComment">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="commentBody" class="form-label">Your comment</label>
+        <InputTextArea id="commentBody"
+                    class="form-control"
+                    rows="3"
+                    @bind-Value="request.Body" />
+        <ValidationMessage For="() => request.Body" />
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary"
+            disabled="@isSubmitting">
+        @(isSubmitting ? "Submitting..." : "Comment")
+    </button>
+
+</EditForm>
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+
+    [Parameter]
+    public int? ParentCommentId { get; set; }
+
+    [Parameter]
+    public EventCallback OnCommentCreated { get; set; }
+
+    private CreateCommentRequest request = new();
+    private bool isSubmitting;
+    private string? errorMessage;
+
+    protected override void OnParametersSet()
+    {
+        request.PostId = PostId;
+        request.ParentCommentId = ParentCommentId;
+    }
+
+    private async Task SubmitComment()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await CommentService.CreateCommentAsync(request);
+
+            request = new CreateCommentRequest
+            {
+                PostId = PostId,
+                ParentCommentId = ParentCommentId
+            };
+
+            await OnCommentCreated.InvokeAsync();
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized =>
+                    "You must be logged in to comment.",
+
+                System.Net.HttpStatusCode.Forbidden =>
+                    "You are not allowed to comment.",
+
+                _ => "Could not communicate with the server."
+            };
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not create comment. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+}

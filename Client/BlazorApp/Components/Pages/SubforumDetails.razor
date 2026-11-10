@@ -48,14 +48,17 @@ else if (subforum != null)
                     <th>Author</th>
                     <th>Created</th>
                     <th>Latest activity</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (PostOverviewDTO post in posts)
                 {
                     <tr>
-                        <td>@post.Title</td>
+                        <td>
+                            <a href="/posts/@post.PostId">
+                                @post.Title
+                            </a>
+                        </td>
                         <td>
                             <a href="/users/@post.UserId">
                                 @post.Username
@@ -63,12 +66,6 @@ else if (subforum != null)
                         </td>
                         <td>@post.CreatedAt.ToLocalTime().ToString("g")</td>
                         <td>@post.LastActivityAt.ToLocalTime().ToString("g")</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm"
-                                    @onclick="() => OpenPost(post.PostId)">
-                                View
-                            </button>
-                        </td>
                     </tr>
                 }
             </tbody>

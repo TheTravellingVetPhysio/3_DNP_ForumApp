@@ -50,12 +50,11 @@ public class HttpReactionService : IReactionService
     }
 
     public async Task<ReactionType?> GetUserReactionAsync(
-        int userId,
         int contentId,
         ContentType contentType)
     {
-        string uri = $"api/reactions/user?userId={userId}" +
-                     $"&contentId={contentId}" +
+        string uri = $"api/reactions/user" +
+                     $"?contentId={contentId}" +
                      $"&contentType={contentType}";
 
         return await httpClient.GetFromJsonAsync<ReactionType?>(uri);
