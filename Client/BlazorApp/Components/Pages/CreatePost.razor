@@ -1,0 +1,103 @@
+@page "/subforums/{SubforumId:int}/posts/create"
+@attribute [Authorize]
+
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject IPostService PostService
+@inject ISubforumService SubforumService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Post</PageTitle>
+
+<h1>Create Post</h1>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else
+{
+    <EditForm Model="request" OnValidSubmit="SubmitPost">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <InputText id="title"
+                       class="form-control"
+                       @bind-Value="request.Title" />
+            <ValidationMessage For="@(() => request.Title)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="body" class="form-label">Content</label>
+            <InputTextArea id="body"
+                           class="form-control"
+                           rows="8"
+                           @bind-Value="request.Body" />
+            <ValidationMessage For="@(() => request.Body)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+            @(isSubmitting ? "Creating..." : "Create Post")
+        </button>
+
+        <button type="button"
+                class="btn btn-secondary ms-2"
+                @onclick="Cancel">
+            Cancel
+        </button>
+    </EditForm>
+}
+
+@code {
+    private CreatePostRequest request = new();
+
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? errorMessage;
+
+    [Parameter]
+    public int SubforumId { get; set; }
+
+    private async Task SubmitPost()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            request.SubforumId = SubforumId;
+            PostDetailsDTO createdPost = await PostService.CreatePostAsync(request);
+
+            Navigation.NavigateTo($"/posts/{createdPost.PostId}");
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not create post. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        if (request.SubforumId > 0)
+        {
+            Navigation.NavigateTo($"/subforums/{request.SubforumId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+}

@@ -6,8 +6,7 @@ public interface IAuthenticationService
 {
     Task<bool> LoginAsync(string username, string password);
     void Logout();
-    event Action? AuthenticationStateChanged;
-
+    event Action? SessionChanged;
     bool IsAuthenticated { get; }
     string? Token { get; }
     int? UserId { get; }

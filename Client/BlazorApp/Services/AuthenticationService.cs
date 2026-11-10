@@ -1,23 +1,32 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using ApiContracts;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace BlazorApp.Services;
 
 public class AuthenticationService(HttpClient httpClient)
-    : IAuthenticationService
+    : AuthenticationStateProvider, IAuthenticationService
 {
     public string? Token { get; private set; }
     public int? UserId { get; private set; }
     public string? Username { get; private set; }
     public UserRole? Role { get; private set; }
-    public event Action? AuthenticationStateChanged;
+
+    public event Action? SessionChanged;
+
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
 
     public bool IsAuthenticated => !string.IsNullOrEmpty(Token);
 
+    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
+        return Task.FromResult(new AuthenticationState(currentUser));
+    }
+
     public async Task<bool> LoginAsync(string username, string password)
     {
-        // Clear any previous session
         Logout();
 
         LoginRequest request = new()
@@ -45,30 +54,47 @@ public class AuthenticationService(HttpClient httpClient)
                 "Server returned an empty login response.");
         }
 
-        // Store session information
         Token = loginResponse.Token;
         UserId = loginResponse.UserId;
         Username = loginResponse.Username;
         Role = loginResponse.Role;
 
-        // Automatically attach JWT to subsequent HTTP requests
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, UserId.Value.ToString()),
+            new(ClaimTypes.Name, Username!),
+            new(ClaimTypes.Role, Role.ToString()!)
+        };
+
+        currentUser = new ClaimsPrincipal(
+            new ClaimsIdentity(claims, "JWT"));
+
         httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", Token);
 
-        AuthenticationStateChanged?.Invoke();
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        SessionChanged?.Invoke();
 
         return true;
     }
 
     public void Logout()
     {
+        // Clear session information
         Token = null;
         UserId = null;
         Username = null;
         Role = null;
 
+        // Remove JWT from subsequent HTTP requests
         httpClient.DefaultRequestHeaders.Authorization = null;
 
-        AuthenticationStateChanged?.Invoke();
+        // Set current user to anonymous
+        currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+
+        // Notify Blazor and other subscribers
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        SessionChanged?.Invoke();
     }
+
 }

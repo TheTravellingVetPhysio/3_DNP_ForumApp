@@ -1,5 +1,6 @@
 using BlazorApp.Components;
 using BlazorApp.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,13 @@ builder.Services.AddScoped<IPostService, HttpPostService>();
 builder.Services.AddScoped<ICommentService, HttpCommentService>();
 builder.Services.AddScoped<ISubforumService, HttpSubforumService>();
 builder.Services.AddScoped<IReactionService, HttpReactionService>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<AuthenticationService>();
+builder.Services.AddScoped<IAuthenticationService>(
+    sp => sp.GetRequiredService<AuthenticationService>());
+builder.Services.AddScoped<AuthenticationStateProvider>(
+    sp => sp.GetRequiredService<AuthenticationService>());
+
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 

@@ -1,6 +1,5 @@
 ﻿@using BlazorApp.Services
 
-@implements IDisposable
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager Navigation
 
@@ -15,16 +14,19 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
 
     <nav class="nav flex-column">
-        @if (AuthenticationService.IsAuthenticated)
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link"
-                        href="@($"users/{AuthenticationService.UserId}")">
-                    <span class="bi bi-person-circle" aria-hidden="true"></span>
-                    Welcome, @AuthenticationService.Username
-                </NavLink>
-            </div>
-        }
+
+        <AuthorizeView>
+            <Authorized Context="authState">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link"
+                            href="@($"users/{authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value}")">
+                        <span class="bi bi-person-circle" aria-hidden="true"></span>
+                        Welcome, @authState.User.Identity?.Name
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill" aria-hidden="true"></span>
@@ -32,46 +34,32 @@
             </NavLink>
         </div>
 
-        @if (AuthenticationService.IsAuthenticated)
-        {
-            <div class="nav-item px-3">
-                <button class="nav-link" @onclick="Logout">
-                    <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
-                    Logout
-                </button>
-            </div>
-        }
-        else
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="login">
-                    <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>
-                    Login
-                </NavLink>
-            </div>
-        }
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <button class="nav-link" @onclick="Logout">
+                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
+                        Logout
+                    </button>
+                </div>
+            </Authorized>
+
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>
+                        Login
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
 
 @code {
-    protected override void OnInitialized()
-    {
-        AuthenticationService.AuthenticationStateChanged += OnAuthenticationStateChanged;
-    }
-
-    private void OnAuthenticationStateChanged()
-    {
-        InvokeAsync(StateHasChanged);
-    }
-
     private void Logout()
     {
         AuthenticationService.Logout();
         Navigation.NavigateTo("/");
-    }
-
-    public void Dispose()
-    {
-        AuthenticationService.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }
