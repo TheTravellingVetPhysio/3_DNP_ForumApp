@@ -1,1 +1,17 @@
-[{"SubforumId":1,"Name":"horsies","UserId":1},{"SubforumId":2,"Name":"kittens","UserId":1}]
+[
+  {
+    "SubforumId": 1,
+    "Name": "General Discussion",
+    "UserId": 1
+  },
+  {
+    "SubforumId": 2,
+    "Name": "Technology",
+    "UserId": 1
+  },
+  {
+    "SubforumId": 3,
+    "Name": "Animals & Nature",
+    "UserId": 2
+  }
+]

@@ -1,101 +1,238 @@
 @page "/login"
 
+@using ApiContracts
 @using BlazorApp.Services
 @using System.ComponentModel.DataAnnotations
+@using System.Net
 
 @inject IAuthenticationService AuthenticationService
+@inject IUserService UserService
 @inject NavigationManager Navigation
 
 <PageTitle>Login</PageTitle>
 
 <div class="container mt-5" style="max-width: 450px;">
-    <h2 class="mb-4">Login</h2>
 
+<h2 class="mb-4">Welcome to ForumApp</h2>
 
-<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
-    <DataAnnotationsValidator />
-
-    <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <InputText id="username"
-                   class="form-control"
-                   @bind-Value="loginModel.Username" />
-        <ValidationMessage For="() => loginModel.Username" />
-    </div>
-
-    <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <InputText id="password"
-                   type="password"
-                   class="form-control"
-                   @bind-Value="loginModel.Password" />
-        <ValidationMessage For="() => loginModel.Password" />
-    </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger" role="alert">
-            @errorMessage
-        </div>
-    }
-
-    <button type="submit"
-            class="btn btn-primary w-100"
-            disabled="@isLoading">
-        @(isLoading ? "Logging in..." : "Login")
+<div class="btn-group w-100 mb-4" role="group">
+    <button type="button"
+            class="btn @( !showRegistration ? "btn-primary" : "btn-outline-primary")"
+            @onclick="ShowLogin">
+        Login
     </button>
-</EditForm>
 
+    <button type="button"
+            class="btn @(showRegistration ? "btn-primary" : "btn-outline-primary")"
+            @onclick="ShowRegistration">
+        Create account
+    </button>
+</div>
+
+@if (registrationSucceeded)
+{
+    <div class="alert alert-success" role="alert">
+        Your account has been created successfully.
+        You can now log in.
+    </div>
+
+    <button class="btn btn-primary w-100"
+            @onclick="ShowLogin">
+        Go to login
+    </button>
+}
+else if (showRegistration)
+{
+    <h4 class="mb-3">Create account</h4>
+
+    <EditForm Model="createUserRequest" OnValidSubmit="HandleRegistration" FormName="RegistrationForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="registerUsername" class="form-label">
+                Username
+            </label>
+
+            <InputText id="registerUsername"
+                       class="form-control"
+                       @bind-Value="createUserRequest.Username" />
+
+            <ValidationMessage For="() => createUserRequest.Username" />
+        </div>
+
+        <div class="mb-3">
+            <label for="registerPassword" class="form-label">
+                Password
+            </label>
+
+            <InputText id="registerPassword"
+                       type="password"
+                       class="form-control"
+                       @bind-Value="createUserRequest.Password" />
+
+            <ValidationMessage For="() => createUserRequest.Password" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        <button type="submit"
+                class="btn btn-primary w-100"
+                disabled="@isLoading">
+            @(isLoading ? "Creating account..." : "Create account")
+        </button>
+    </EditForm>
+}
+else
+{
+    <h4 class="mb-3">Login</h4>
+
+    <EditForm Model="loginRequest" OnValidSubmit="HandleLogin" FormName="LoginForm">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="username" class="form-label">
+                Username
+            </label>
+
+            <InputText id="username"
+                       class="form-control"
+                       @bind-Value="loginRequest.Username" />
+
+            <ValidationMessage For="() => loginRequest.Username" />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">
+                Password
+            </label>
+
+            <InputText id="password"
+                       type="password"
+                       class="form-control"
+                       @bind-Value="loginRequest.Password" />
+
+            <ValidationMessage For="() => loginRequest.Password" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        <button type="submit"
+                class="btn btn-primary w-100"
+                disabled="@isLoading">
+            @(isLoading ? "Logging in..." : "Login")
+        </button>
+    </EditForm>
+}
 
 </div>
 
 @code {
-private LoginModel loginModel = new();
-private string? errorMessage;
-private bool isLoading;
+    private CreateUserRequest createUserRequest = new();
+    private LoginRequest loginRequest = new();
 
-private async Task HandleLogin()
-{
-    errorMessage = null;
-    isLoading = true;
+    private string? errorMessage;
 
-    try
+    private bool isLoading;
+    private bool showRegistration;
+    private bool registrationSucceeded;
+
+    private async Task HandleLogin()
     {
-        bool success = await AuthenticationService.LoginAsync(
-            loginModel.Username,
-            loginModel.Password);
+        errorMessage = null;
+        isLoading = true;
 
-        if (success)
+        try
         {
-            Navigation.NavigateTo("/");
+            bool success = await AuthenticationService.LoginAsync(
+                loginRequest.Username,
+                loginRequest.Password);
+
+            if (success)
+            {
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = "Invalid username or password.";
+            }
         }
-        else
+        catch (HttpRequestException)
         {
-            errorMessage = "Invalid username or password.";
+            errorMessage = "Could not communicate with the server.";
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
-    catch (HttpRequestException ex)
-    {
-        Console.WriteLine(ex.ToString());
-        errorMessage = ex.Message;
-    }
-    catch (Exception)
-    {
-        errorMessage = "An unexpected error occurred.";
-    }
-    finally
-    {
-        isLoading = false;
-    }
-}
 
-private class LoginModel
-{
-    [Required]
-    public string Username { get; set; } = "";
+    private async Task HandleRegistration()
+    {
+        errorMessage = null;
+        isLoading = true;
 
-    [Required]
-    public string Password { get; set; } = "";
-}
+        try
+        {
+            var request = new CreateUserRequest
+            {
+                Username = createUserRequest.Username,
+                Password = createUserRequest.Password
+            };
+
+            await UserService.CreateUserAsync(request);
+
+            registrationSucceeded = true;
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = ex.StatusCode switch
+            {
+                HttpStatusCode.Conflict =>
+                    "This username is already taken.",
+
+                HttpStatusCode.BadRequest =>
+                    "The submitted information is invalid.",
+
+                _ => "Could not communicate with the server."
+            };
+        }
+        catch (Exception)
+        {
+            errorMessage = "Could not create your account. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ShowLogin()
+    {
+        showRegistration = false;
+        registrationSucceeded = false;
+        errorMessage = null;
+    }
+
+    private void ShowRegistration()
+    {
+        showRegistration = true;
+        registrationSucceeded = false;
+        errorMessage = null;
+    }
 
 }

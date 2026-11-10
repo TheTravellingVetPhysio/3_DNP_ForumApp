@@ -1,1 +1,72 @@
-[{"ReactionId":1,"ReactionType":0,"UserId":1,"ContentId":1,"ContentType":0},{"ReactionId":2,"ReactionType":0,"UserId":1,"ContentId":4,"ContentType":0}]
+[
+  {
+    "ReactionId": 1,
+    "ReactionType": 0,
+    "UserId": 2,
+    "ContentId": 1,
+    "ContentType": 0
+  },
+  {
+    "ReactionId": 2,
+    "ReactionType": 0,
+    "UserId": 3,
+    "ContentId": 1,
+    "ContentType": 0
+  },
+  {
+    "ReactionId": 3,
+    "ReactionType": 1,
+    "UserId": 1,
+    "ContentId": 3,
+    "ContentType": 0
+  },
+  {
+    "ReactionId": 4,
+    "ReactionType": 0,
+    "UserId": 1,
+    "ContentId": 5,
+    "ContentType": 0
+  },
+  {
+    "ReactionId": 5,
+    "ReactionType": 0,
+    "UserId": 3,
+    "ContentId": 6,
+    "ContentType": 0
+  },
+  {
+    "ReactionId": 6,
+    "ReactionType": 0,
+    "UserId": 2,
+    "ContentId": 9,
+    "ContentType": 1
+  },
+  {
+    "ReactionId": 7,
+    "ReactionType": 0,
+    "UserId": 1,
+    "ContentId": 3,
+    "ContentType": 1
+  },
+  {
+    "ReactionId": 8,
+    "ReactionType": 1,
+    "UserId": 3,
+    "ContentId": 4,
+    "ContentType": 1
+  },
+  {
+    "ReactionId": 9,
+    "ReactionType": 0,
+    "UserId": 2,
+    "ContentId": 11,
+    "ContentType": 1
+  },
+  {
+    "ReactionId": 10,
+    "ReactionType": 0,
+    "UserId": 1,
+    "ContentId": 13,
+    "ContentType": 1
+  }
+]

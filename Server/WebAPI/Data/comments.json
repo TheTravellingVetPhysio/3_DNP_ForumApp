@@ -1,1 +1,122 @@
-[{"PostId":4,"ParentCommentId":null,"ContentId":1,"Body":"It is crap","Timestamp":"2026-11-10T18:57:13.448596+00:00","UserId":1},{"PostId":4,"ParentCommentId":1,"ContentId":2,"Body":"Very much... But then you can watch kitten videoes and feel all fluffy...","Timestamp":"2026-11-10T18:58:09.332711+00:00","UserId":1},{"PostId":4,"ParentCommentId":null,"ContentId":3,"Body":"Oh, I think it is fantastic that forests are planted","Timestamp":"2026-11-10T19:04:47.6064375+00:00","UserId":1},{"PostId":4,"ParentCommentId":2,"ContentId":4,"Body":"Ahhh \u2764\uFE0F","Timestamp":"2026-11-10T19:05:10.8978636+00:00","UserId":1},{"PostId":4,"ParentCommentId":3,"ContentId":5,"Body":"Yes, it looks amazing","Timestamp":"2026-11-10T19:07:30.757722+00:00","UserId":1}]
+[
+  {
+    "PostId": 1,
+    "ParentCommentId": null,
+    "ContentId": 1,
+    "Body": "I am working on improving the structure of an older application.",
+    "Timestamp": "2026-11-03T10:00:00+00:00",
+    "UserId": 3
+  },
+  {
+    "PostId": 1,
+    "ParentCommentId": 1,
+    "ContentId": 2,
+    "Body": "That sounds familiar. Are you separating the business logic from the controllers?",
+    "Timestamp": "2026-11-03T10:20:00+00:00",
+    "UserId": 2
+  },
+  {
+    "PostId": 1,
+    "ParentCommentId": 2,
+    "ContentId": 3,
+    "Body": "Yes, that is the goal. It has made the code easier to follow already.",
+    "Timestamp": "2026-11-03T10:35:00+00:00",
+    "UserId": 3
+  },
+  {
+    "PostId": 1,
+    "ParentCommentId": null,
+    "ContentId": 4,
+    "Body": "I am learning more about automated testing this week.",
+    "Timestamp": "2026-11-03T11:05:00+00:00",
+    "UserId": 1
+  },
+  {
+    "PostId": 2,
+    "ParentCommentId": null,
+    "ContentId": 5,
+    "Body": "Congratulations! Those small wins really do add up.",
+    "Timestamp": "2026-11-05T15:00:00+00:00",
+    "UserId": 2
+  },
+  {
+    "PostId": 3,
+    "ParentCommentId": null,
+    "ContentId": 6,
+    "Body": "I usually separate the application into layers and keep dependencies pointing inward.",
+    "Timestamp": "2026-11-06T10:40:00+00:00",
+    "UserId": 3
+  },
+  {
+    "PostId": 3,
+    "ParentCommentId": 6,
+    "ContentId": 7,
+    "Body": "Do you put DTO mapping in the controllers or in separate mapper classes?",
+    "Timestamp": "2026-11-06T11:00:00+00:00",
+    "UserId": 2
+  },
+  {
+    "PostId": 3,
+    "ParentCommentId": 7,
+    "ContentId": 8,
+    "Body": "I prefer separate mapper classes once the mapping gets more involved.",
+    "Timestamp": "2026-11-06T11:15:00+00:00",
+    "UserId": 3
+  },
+  {
+    "PostId": 4,
+    "ParentCommentId": null,
+    "ContentId": 9,
+    "Body": "I would start with the business rules because they tend to contain the most important behaviour.",
+    "Timestamp": "2026-11-07T17:10:00+00:00",
+    "UserId": 1
+  },
+  {
+    "PostId": 4,
+    "ParentCommentId": 9,
+    "ContentId": 10,
+    "Body": "Agreed. Then I would add tests for invalid input and boundary conditions.",
+    "Timestamp": "2026-11-07T17:25:00+00:00",
+    "UserId": 2
+  },
+  {
+    "PostId": 5,
+    "ParentCommentId": null,
+    "ContentId": 11,
+    "Body": "Try the forests around Silkeborg. There are several lovely routes.",
+    "Timestamp": "2026-11-08T09:00:00+00:00",
+    "UserId": 1
+  },
+  {
+    "PostId": 5,
+    "ParentCommentId": 11,
+    "ContentId": 12,
+    "Body": "Thanks! I will look those up.",
+    "Timestamp": "2026-11-08T09:25:00+00:00",
+    "UserId": 2
+  },
+  {
+    "PostId": 6,
+    "ParentCommentId": null,
+    "ContentId": 13,
+    "Body": "Native plants provide food and shelter for insects and other wildlife.",
+    "Timestamp": "2026-11-08T13:00:00+00:00",
+    "UserId": 3
+  },
+  {
+    "PostId": 7,
+    "ParentCommentId": null,
+    "ContentId": 14,
+    "Body": "I wish I had understood dependency injection earlier. It makes testing much easier.",
+    "Timestamp": "2026-11-09T12:00:00+00:00",
+    "UserId": 2
+  },
+  {
+    "PostId": 8,
+    "ParentCommentId": null,
+    "ContentId": 15,
+    "Body": "I recently listened to a great podcast about software design. Happy to share the name if anyone is interested.",
+    "Timestamp": "2026-11-10T08:15:00+00:00",
+    "UserId": 1
+  }
+]
