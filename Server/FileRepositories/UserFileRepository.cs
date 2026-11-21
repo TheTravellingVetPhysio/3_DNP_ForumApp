@@ -5,10 +5,11 @@ using RepositoryContracts;
 
 public class UserFileRepository : FileRepository<User>, IUserRepository
 {
-    public UserFileRepository() : base(
-        filePath: "Data/users.json",
-        getId: u => u.UserId,
-        setId: (u, id) => u.UserId = id)
+    public UserFileRepository(string dataDirectory = "Data")
+        : base(
+            filePath: Path.Combine(dataDirectory, "users.json"),
+            getId: u => u.UserId,
+            setId: (u, id) => u.UserId = id)
     {
     }
 

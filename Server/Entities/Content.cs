@@ -1,4 +1,3 @@
-using System;
 
 namespace Entities;
 
@@ -8,4 +7,5 @@ public abstract class Content
     public required string Body { get; set; }
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
     public int UserId { get; set; }   // FK -> User.UserId
+    public User User { get; set; } = null!;
 }

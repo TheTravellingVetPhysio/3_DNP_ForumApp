@@ -14,9 +14,9 @@ public class PostFileRepository : FileRepository<Post>, IPostRepository
     public PostFileRepository(
         IUserRepository userRepository,
         ICommentRepository commentRepository,
-        IReactionRepository reactionRepository)
+        IReactionRepository reactionRepository, string dataDirectory = "Data")
         : base(
-            filePath: "Data/posts.json",
+            filePath: Path.Combine(dataDirectory, "posts.json"),
             getId: p => p.ContentId,
             setId: (p, id) => p.ContentId = id)
     {

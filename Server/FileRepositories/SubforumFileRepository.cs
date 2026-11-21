@@ -12,9 +12,9 @@ public class SubforumFileRepository : FileRepository<Subforum>, ISubforumReposit
 
     public SubforumFileRepository(
         IPostRepository postRepository,
-        ICommentRepository commentRepository)
+        ICommentRepository commentRepository, string dataDirectory = "Data")
         : base(
-            filePath: "Data/subforums.json",
+            filePath: Path.Combine(dataDirectory, "subforums.json"),
             getId: s => s.SubforumId,
             setId: (s, id) => s.SubforumId = id)
     {

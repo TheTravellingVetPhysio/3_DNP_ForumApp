@@ -3,6 +3,7 @@
     <Project Path="Client/BlazorApp/BlazorApp.csproj" />
   </Folder>
   <Folder Name="/Server/">
+    <Project Path="Server/EfcRepositories/EfcRepositories.csproj" />
     <Project Path="Server/Entities/Entities.csproj" />
     <Project Path="Server/RepositoryContracts/RepositoryContracts.csproj" />
     <Project Path="Server/Services/Services.csproj" />
@@ -12,5 +13,8 @@
   <Folder Name="/Shared/">
     <Project Path="Shared/ApiContracts/ApiContracts.csproj" />
     <Project Path="Shared/Exceptions/Exceptions.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/RepositoryTests/RepositoryTests.csproj" />
   </Folder>
 </Solution>

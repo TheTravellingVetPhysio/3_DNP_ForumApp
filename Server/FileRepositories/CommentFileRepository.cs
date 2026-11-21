@@ -10,9 +10,9 @@ public class CommentFileRepository : FileRepository<Comment>, ICommentRepository
 
     public CommentFileRepository(
         IUserRepository userRepository,
-        IReactionRepository reactionRepository)
+        IReactionRepository reactionRepository, string dataDirectory = "Data")
         : base(
-            filePath: "Data/comments.json",
+            filePath: Path.Combine(dataDirectory, "comments.json"),
             getId: c => c.ContentId,
             setId: (c, id) => c.ContentId = id)
     {
