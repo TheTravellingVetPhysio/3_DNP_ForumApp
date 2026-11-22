@@ -24,7 +24,8 @@ public class ForumAppContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlite("Data Source=app.db");
+            optionsBuilder.UseNpgsql(
+                "Host=localhost;Port=5432;Database=forumapp;Username=forumapp;Password=forumapp_dev");
         }
     }
 

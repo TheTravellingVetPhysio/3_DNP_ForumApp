@@ -3,26 +3,45 @@ namespace RepositoryTests.Contracts;
 using ApiContracts;
 using Entities;
 using Exceptions;
-using FileRepositories;
+using RepositoryContracts;
 using RepositoryTests.Factories;
 using Xunit;
 
-public class SubforumRepositoryTests
+public class SubforumRepositoryTests : IDisposable
 {
-    private static async Task<Subforum> CreateSubforumAsync(
-        FileRepositoryFactory factory,
-        string name = "Test subforum",
-        int userId = 1)
+    private readonly IRepositoryFactory factory;
+    private readonly ISubforumRepository repository;
+
+    public SubforumRepositoryTests()
     {
+        factory = new EfcRepositoryFactory();
+        repository = factory.SubforumRepository;
+    }
+
+    public void Dispose()
+    {
+        factory.Dispose();
+    }
+
+    private static async Task<Subforum> CreateSubforumAsync(
+        IRepositoryFactory factory,
+        string name = "Test subforum")
+    {
+        var user = await factory.UserRepository.AddAsync(new User
+        {
+            Username = $"user_{Guid.NewGuid():N}",
+            PasswordHash = "testhash"
+        });
+
         return await factory.SubforumRepository.AddAsync(new Subforum
         {
             Name = name,
-            UserId = userId
+            UserId = user.UserId
         });
     }
 
     private static async Task<Post> CreatePostAsync(
-        FileRepositoryFactory factory,
+        IRepositoryFactory factory,
         int subforumId,
         DateTimeOffset? timestamp = null)
     {
@@ -43,28 +62,30 @@ public class SubforumRepositoryTests
     }
 
     private static async Task<Comment> CreateCommentAsync(
-        FileRepositoryFactory factory,
+        IRepositoryFactory factory,
         int postId,
         DateTimeOffset? timestamp = null)
     {
+        var user = await factory.UserRepository.AddAsync(new User
+        {
+            Username = $"user_{Guid.NewGuid():N}",
+            PasswordHash = "testhash"
+        });
+
         return await factory.CommentRepository.AddAsync(new Comment
         {
             Body = "Test comment",
-            UserId = 1,
+            UserId = user.UserId,
             PostId = postId,
             Timestamp = timestamp ?? DateTimeOffset.UtcNow
         });
     }
 
-    // --------------------------------------------------
     // CRUD
-    // --------------------------------------------------
 
     [Fact]
     public async Task AddAsync_ShouldAssignId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
 
         Assert.True(subforum.SubforumId > 0);
@@ -73,8 +94,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldAssignUniqueIds()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum1 = await CreateSubforumAsync(factory, "First");
         var subforum2 = await CreateSubforumAsync(factory, "Second");
 
@@ -84,8 +103,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldStartIdsAtOne()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
 
         Assert.Equal(1, subforum.SubforumId);
@@ -94,12 +111,9 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldReturnSubforum()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
 
-        var result = await factory.SubforumRepository
-            .GetSingleAsync(subforum.SubforumId);
+        var result = await repository.GetSingleAsync(subforum.SubforumId);
 
         Assert.Equal(subforum.SubforumId, result.SubforumId);
         Assert.Equal(subforum.Name, result.Name);
@@ -109,22 +123,18 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenSubforumDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.SubforumRepository.GetSingleAsync(999));
+            () => repository.GetSingleAsync(999));
     }
 
     [Fact]
     public async Task GetManyAsync_ShouldReturnAllSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateSubforumAsync(factory, "First");
         await CreateSubforumAsync(factory, "Second");
         await CreateSubforumAsync(factory, "Third");
 
-        var result = await factory.SubforumRepository.GetManyAsync();
+        var result = await repository.GetManyAsync();
 
         Assert.Equal(3, result.Count);
     }
@@ -132,9 +142,7 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnEmptyList_WhenNoSubforumsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.SubforumRepository.GetManyAsync();
+        var result = await repository.GetManyAsync();
 
         Assert.Empty(result);
     }
@@ -142,16 +150,13 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldUpdateSubforum()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
 
         subforum.Name = "Updated subforum";
 
-        await factory.SubforumRepository.UpdateAsync(subforum);
+        await repository.UpdateAsync(subforum);
 
-        var result = await factory.SubforumRepository
-            .GetSingleAsync(subforum.SubforumId);
+        var result = await repository.GetSingleAsync(subforum.SubforumId);
 
         Assert.Equal("Updated subforum", result.Name);
     }
@@ -159,17 +164,14 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldPreserveId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
         int originalId = subforum.SubforumId;
 
         subforum.Name = "Updated subforum";
 
-        await factory.SubforumRepository.UpdateAsync(subforum);
+        await repository.UpdateAsync(subforum);
 
-        var result = await factory.SubforumRepository
-            .GetSingleAsync(originalId);
+        var result = await repository.GetSingleAsync(originalId);
 
         Assert.Equal(originalId, result.SubforumId);
     }
@@ -177,17 +179,14 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldNotAffectOtherSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum1 = await CreateSubforumAsync(factory, "First");
         var subforum2 = await CreateSubforumAsync(factory, "Second");
 
         subforum1.Name = "Updated first";
 
-        await factory.SubforumRepository.UpdateAsync(subforum1);
+        await repository.UpdateAsync(subforum1);
 
-        var result = await factory.SubforumRepository
-            .GetSingleAsync(subforum2.SubforumId);
+        var result = await repository.GetSingleAsync(subforum2.SubforumId);
 
         Assert.Equal("Second", result.Name);
     }
@@ -195,8 +194,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldThrow_WhenSubforumDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = new Subforum
         {
             SubforumId = 999,
@@ -205,34 +202,29 @@ public class SubforumRepositoryTests
         };
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.SubforumRepository.UpdateAsync(subforum));
+            () => repository.UpdateAsync(subforum));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldMakeSubforumUnavailable()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
 
-        await factory.SubforumRepository.DeleteAsync(subforum.SubforumId);
+        await repository.DeleteAsync(subforum.SubforumId);
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.SubforumRepository.GetSingleAsync(subforum.SubforumId));
+            () => repository.GetSingleAsync(subforum.SubforumId));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldNotDeleteOtherSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum1 = await CreateSubforumAsync(factory, "First");
         var subforum2 = await CreateSubforumAsync(factory, "Second");
 
-        await factory.SubforumRepository.DeleteAsync(subforum1.SubforumId);
+        await repository.DeleteAsync(subforum1.SubforumId);
 
-        var result = await factory.SubforumRepository
-            .GetSingleAsync(subforum2.SubforumId);
+        var result = await repository.GetSingleAsync(subforum2.SubforumId);
 
         Assert.Equal(subforum2.SubforumId, result.SubforumId);
     }
@@ -240,38 +232,29 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenSubforumDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.SubforumRepository.DeleteAsync(999));
+            () => repository.DeleteAsync(999));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenDeletingSameSubforumTwice()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory);
 
-        await factory.SubforumRepository.DeleteAsync(subforum.SubforumId);
+        await repository.DeleteAsync(subforum.SubforumId);
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.SubforumRepository.DeleteAsync(subforum.SubforumId));
+            () => repository.DeleteAsync(subforum.SubforumId));
     }
 
-    // --------------------------------------------------
     // SubforumNameExistsAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task SubforumNameExistsAsync_ShouldReturnTrue_WhenNameExists()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateSubforumAsync(factory, "Java");
 
-        var result = await factory.SubforumRepository
-            .SubforumNameExistsAsync("Java");
+        var result = await repository.SubforumNameExistsAsync("Java");
 
         Assert.True(result);
     }
@@ -279,12 +262,9 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task SubforumNameExistsAsync_ShouldReturnFalse_WhenNameDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateSubforumAsync(factory, "Java");
 
-        var result = await factory.SubforumRepository
-            .SubforumNameExistsAsync("CSharp");
+        var result = await repository.SubforumNameExistsAsync("CSharp");
 
         Assert.False(result);
     }
@@ -292,12 +272,9 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task SubforumNameExistsAsync_ShouldIgnoreCase()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateSubforumAsync(factory, "Java");
 
-        var result = await factory.SubforumRepository
-            .SubforumNameExistsAsync("JAVA");
+        var result = await repository.SubforumNameExistsAsync("JAVA");
 
         Assert.True(result);
     }
@@ -305,29 +282,21 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task SubforumNameExistsAsync_ShouldReturnFalse_WhenNoSubforumsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.SubforumRepository
-            .SubforumNameExistsAsync("Java");
+        var result = await repository.SubforumNameExistsAsync("Java");
 
         Assert.False(result);
     }
 
-    // --------------------------------------------------
     // GetSubforumOverviewsAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldReturnAllSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateSubforumAsync(factory, "Java");
         await CreateSubforumAsync(factory, "CSharp");
         await CreateSubforumAsync(factory, "Python");
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         Assert.Equal(3, result.Count);
     }
@@ -335,10 +304,7 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldReturnEmptyList_WhenNoSubforumsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         Assert.Empty(result);
     }
@@ -346,12 +312,9 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldMapSubforumProperties()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory, "Java");
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var dto = Assert.Single(result);
 
@@ -362,12 +325,9 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldReturnNullLastActivity_WhenSubforumHasNoActivity()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateSubforumAsync(factory, "Empty");
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var dto = Assert.Single(result);
 
@@ -377,8 +337,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldUseLatestPostAsLastActivity()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory, "Java");
 
         var earlier = DateTimeOffset.UtcNow.AddDays(-2);
@@ -387,8 +345,7 @@ public class SubforumRepositoryTests
         await CreatePostAsync(factory, subforum.SubforumId, earlier);
         await CreatePostAsync(factory, subforum.SubforumId, later);
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var dto = Assert.Single(result);
 
@@ -398,8 +355,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldUseLatestCommentAsLastActivity()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory, "Java");
 
         var post = await CreatePostAsync(
@@ -419,8 +374,7 @@ public class SubforumRepositoryTests
             post.ContentId,
             latestComment);
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var dto = Assert.Single(result);
 
@@ -430,8 +384,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldUseLatestActivityBetweenPostsAndComments()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum = await CreateSubforumAsync(factory, "Java");
 
         var post = await CreatePostAsync(
@@ -452,8 +404,7 @@ public class SubforumRepositoryTests
             subforum.SubforumId,
             latestPost);
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var dto = Assert.Single(result);
 
@@ -463,8 +414,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldIgnoreActivityFromOtherSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-
         var subforum1 = await CreateSubforumAsync(factory, "Java");
         var subforum2 = await CreateSubforumAsync(factory, "CSharp");
 
@@ -485,8 +434,7 @@ public class SubforumRepositoryTests
             post1.ContentId,
             commentTime);
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var javaDto = result.Single(s => s.SubforumId == subforum1.SubforumId);
         var csharpDto = result.Single(s => s.SubforumId == subforum2.SubforumId);
@@ -498,8 +446,6 @@ public class SubforumRepositoryTests
     [Fact]
     public async Task GetSubforumOverviewsAsync_ShouldReturnCorrectActivityForMultipleSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-
         var java = await CreateSubforumAsync(factory, "Java");
         var csharp = await CreateSubforumAsync(factory, "CSharp");
         var python = await CreateSubforumAsync(factory, "Python");
@@ -519,8 +465,7 @@ public class SubforumRepositoryTests
             javaPost.ContentId,
             latestCommentTime);
 
-        var result = await factory.SubforumRepository
-            .GetSubforumOverviewsAsync();
+        var result = await repository.GetSubforumOverviewsAsync();
 
         var javaDto = result.Single(s => s.SubforumId == java.SubforumId);
         var csharpDto = result.Single(s => s.SubforumId == csharp.SubforumId);

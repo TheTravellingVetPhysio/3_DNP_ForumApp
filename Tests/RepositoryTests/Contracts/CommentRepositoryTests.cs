@@ -1,16 +1,30 @@
 namespace RepositoryTests.Contracts;
 
 using Entities;
-using FileRepositories;
 using RepositoryTests.Factories;
 using Xunit;
 using ApiContracts;
 using Exceptions;
+using RepositoryContracts;
 
-public class CommentRepositoryTests
+public class CommentRepositoryTests : IDisposable
 {
+    private readonly EfcRepositoryFactory factory;
+    private readonly ICommentRepository repository;
+
+    public CommentRepositoryTests()
+    {
+        factory = new EfcRepositoryFactory();
+        repository = factory.CommentRepository;
+    }
+
+    public void Dispose()
+    {
+        factory.Dispose();
+    }
+
     private static async Task<Comment> CreateCommentAsync(
-        FileRepositoryFactory factory,
+        EfcRepositoryFactory factory,
         string body = "Test comment",
         User? user = null,
         int postId = 1,
@@ -33,15 +47,11 @@ public class CommentRepositoryTests
         });
     }
 
-    // --------------------------------------------------
     // CRUD
-    // --------------------------------------------------
 
     [Fact]
     public async Task AddAsync_ShouldAssignId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
         Assert.True(comment.ContentId > 0);
@@ -50,8 +60,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldAssignUniqueIds()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment1 = await CreateCommentAsync(factory);
         var comment2 = await CreateCommentAsync(factory);
 
@@ -61,8 +69,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldStartIdsAtOne()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
         Assert.Equal(1, comment.ContentId);
@@ -71,12 +77,9 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldReturnComment()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
-        var result = await factory.CommentRepository
-            .GetSingleAsync(comment.ContentId);
+        var result = await repository.GetSingleAsync(comment.ContentId);
 
         Assert.Equal(comment.ContentId, result.ContentId);
         Assert.Equal(comment.Body, result.Body);
@@ -87,22 +90,18 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenCommentDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.CommentRepository.GetSingleAsync(999));
+            () => repository.GetSingleAsync(999));
     }
 
     [Fact]
     public async Task GetManyAsync_ShouldReturnAllComments()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory);
         await CreateCommentAsync(factory);
         await CreateCommentAsync(factory);
 
-        var result = await factory.CommentRepository.GetManyAsync();
+        var result = await repository.GetManyAsync();
 
         Assert.Equal(3, result.Count);
     }
@@ -110,9 +109,7 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnEmptyList_WhenNoCommentsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.CommentRepository.GetManyAsync();
+        var result = await repository.GetManyAsync();
 
         Assert.Empty(result);
     }
@@ -120,16 +117,13 @@ public class CommentRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldUpdateComment()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
         comment.Body = "Updated comment";
 
-        await factory.CommentRepository.UpdateAsync(comment);
+        await repository.UpdateAsync(comment);
 
-        var result = await factory.CommentRepository
-            .GetSingleAsync(comment.ContentId);
+        var result = await repository.GetSingleAsync(comment.ContentId);
 
         Assert.Equal("Updated comment", result.Body);
     }
@@ -137,17 +131,14 @@ public class CommentRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldPreserveId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
         int originalId = comment.ContentId;
 
         comment.Body = "Updated comment";
 
-        await factory.CommentRepository.UpdateAsync(comment);
+        await repository.UpdateAsync(comment);
 
-        var result = await factory.CommentRepository
-            .GetSingleAsync(originalId);
+        var result = await repository.GetSingleAsync(originalId);
 
         Assert.Equal(originalId, result.ContentId);
     }
@@ -155,17 +146,14 @@ public class CommentRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldNotAffectOtherComments()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment1 = await CreateCommentAsync(factory, "First comment");
         var comment2 = await CreateCommentAsync(factory, "Second comment");
 
         comment1.Body = "Updated comment";
 
-        await factory.CommentRepository.UpdateAsync(comment1);
+        await repository.UpdateAsync(comment1);
 
-        var result = await factory.CommentRepository
-            .GetSingleAsync(comment2.ContentId);
+        var result = await repository.GetSingleAsync(comment2.ContentId);
 
         Assert.Equal("Second comment", result.Body);
     }
@@ -173,8 +161,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldThrow_WhenCommentDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = new Comment
         {
             ContentId = 999,
@@ -184,34 +170,29 @@ public class CommentRepositoryTests
         };
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.CommentRepository.UpdateAsync(comment));
+            () => repository.UpdateAsync(comment));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldMakeCommentUnavailable()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
-        await factory.CommentRepository.DeleteAsync(comment.ContentId);
+        await repository.DeleteAsync(comment.ContentId);
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.CommentRepository.GetSingleAsync(comment.ContentId));
+            () => repository.GetSingleAsync(comment.ContentId));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldNotDeleteOtherComments()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment1 = await CreateCommentAsync(factory);
         var comment2 = await CreateCommentAsync(factory);
 
-        await factory.CommentRepository.DeleteAsync(comment1.ContentId);
+        await repository.DeleteAsync(comment1.ContentId);
 
-        var result = await factory.CommentRepository
-            .GetSingleAsync(comment2.ContentId);
+        var result = await repository.GetSingleAsync(comment2.ContentId);
 
         Assert.Equal(comment2.ContentId, result.ContentId);
     }
@@ -219,40 +200,31 @@ public class CommentRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenCommentDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.CommentRepository.DeleteAsync(999));
+            () => repository.DeleteAsync(999));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenDeletingSameCommentTwice()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
-        await factory.CommentRepository.DeleteAsync(comment.ContentId);
+        await repository.DeleteAsync(comment.ContentId);
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.CommentRepository.DeleteAsync(comment.ContentId));
+            () => repository.DeleteAsync(comment.ContentId));
     }
 
-    // --------------------------------------------------
     // GetCommentsByPostIdAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetCommentsByPostIdAsync_ShouldReturnCommentsForPost()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 2);
 
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdAsync(1);
+        var result = await repository.GetCommentsByPostIdAsync(1);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, c => Assert.Equal(1, c.PostId));
@@ -261,10 +233,7 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentsByPostIdAsync_ShouldReturnEmptyList_WhenNoCommentsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdAsync(999);
+        var result = await repository.GetCommentsByPostIdAsync(999);
 
         Assert.Empty(result);
     }
@@ -272,8 +241,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentsByPostIdAsync_ShouldOrderByTimestampAscending()
     {
-        using var factory = new FileRepositoryFactory();
-
         var later = await CreateCommentAsync(
             factory,
             body: "Later",
@@ -289,30 +256,24 @@ public class CommentRepositoryTests
             body: "Middle",
             timestamp: DateTimeOffset.UtcNow);
 
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdAsync(1);
+        var result = await repository.GetCommentsByPostIdAsync(1);
 
         Assert.Equal(
             new[] { earlier.ContentId, middle.ContentId, later.ContentId },
             result.Select(c => c.ContentId));
     }
 
-    // --------------------------------------------------
     // GetCommentsByPostIdsAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetCommentsByPostIdsAsync_ShouldReturnCommentsForAllSpecifiedPosts()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 2);
         await CreateCommentAsync(factory, postId: 3);
         await CreateCommentAsync(factory, postId: 4);
 
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdsAsync(new List<int> { 1, 3 });
+        var result = await repository.GetCommentsByPostIdsAsync(new List<int> { 1, 3 });
 
         Assert.Equal(2, result.Count);
         Assert.All(
@@ -323,12 +284,9 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentsByPostIdsAsync_ShouldReturnEmptyList_WhenNoPostsMatch()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
 
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdsAsync(new List<int> { 2, 3 });
+        var result = await repository.GetCommentsByPostIdsAsync(new List<int> { 2, 3 });
 
         Assert.Empty(result);
     }
@@ -336,12 +294,9 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentsByPostIdsAsync_ShouldReturnEmptyList_WhenPostIdsIsEmpty()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
 
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdsAsync(new List<int>());
+        var result = await repository.GetCommentsByPostIdsAsync(new List<int>());
 
         Assert.Empty(result);
     }
@@ -349,8 +304,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentsByPostIdsAsync_ShouldOrderByTimestampAscending()
     {
-        using var factory = new FileRepositoryFactory();
-
         var later = await CreateCommentAsync(
             factory,
             postId: 1,
@@ -366,30 +319,24 @@ public class CommentRepositoryTests
             postId: 1,
             timestamp: DateTimeOffset.UtcNow);
 
-        var result = await factory.CommentRepository
-            .GetCommentsByPostIdsAsync(new List<int> { 1, 2 });
+        var result = await repository.GetCommentsByPostIdsAsync(new List<int> { 1, 2 });
 
         Assert.Equal(
             new[] { earlier.ContentId, middle.ContentId, later.ContentId },
             result.Select(c => c.ContentId));
     }
 
-    // --------------------------------------------------
     // GetCommentCountByPostIdAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetCommentCountByPostIdAsync_ShouldReturnCorrectCount()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 2);
 
-        var result = await factory.CommentRepository
-            .GetCommentCountByPostIdAsync(1);
+        var result = await repository.GetCommentCountByPostIdAsync(1);
 
         Assert.Equal(3, result);
     }
@@ -397,10 +344,7 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentCountByPostIdAsync_ShouldReturnZero_WhenPostHasNoComments()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.CommentRepository
-            .GetCommentCountByPostIdAsync(999);
+        var result = await repository.GetCommentCountByPostIdAsync(999);
 
         Assert.Equal(0, result);
     }
@@ -408,33 +352,25 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentCountByPostIdAsync_ShouldNotCountCommentsFromOtherPosts()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 2);
         await CreateCommentAsync(factory, postId: 2);
 
-        var result = await factory.CommentRepository
-            .GetCommentCountByPostIdAsync(1);
+        var result = await repository.GetCommentCountByPostIdAsync(1);
 
         Assert.Equal(1, result);
     }
 
-    // --------------------------------------------------
     // GetCommentDetailsAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldReturnAllComments_WhenNoFiltersAreProvided()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory);
         await CreateCommentAsync(factory);
         await CreateCommentAsync(factory);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, null);
+        var result = await repository.GetCommentDetailsAsync(null, null, null);
 
         Assert.Equal(3, result.Count);
     }
@@ -442,10 +378,7 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldReturnEmptyList_WhenNoCommentsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, null);
+        var result = await repository.GetCommentDetailsAsync(null, null, null);
 
         Assert.Empty(result);
     }
@@ -453,14 +386,11 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldFilterByPostId()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 1);
         await CreateCommentAsync(factory, postId: 2);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(1, null, null);
+        var result = await repository.GetCommentDetailsAsync(1, null, null);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, c => Assert.Equal(1, c.PostId));
@@ -469,8 +399,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldFilterByUserId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var user1 = await factory.UserRepository.AddAsync(new User
         {
             Username = "user1",
@@ -487,8 +415,7 @@ public class CommentRepositoryTests
         await CreateCommentAsync(factory, user: user1);
         await CreateCommentAsync(factory, user: user2);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, user1.UserId, null);
+        var result = await repository.GetCommentDetailsAsync(null, user1.UserId, null);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, c => Assert.Equal(user1.UserId, c.UserId));
@@ -497,8 +424,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldFilterByUsername()
     {
-        using var factory = new FileRepositoryFactory();
-
         var user1 = await factory.UserRepository.AddAsync(new User
         {
             Username = "alice",
@@ -514,8 +439,7 @@ public class CommentRepositoryTests
         await CreateCommentAsync(factory, user: user1);
         await CreateCommentAsync(factory, user: user2);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, "alice");
+        var result = await repository.GetCommentDetailsAsync(null, null, "alice");
 
         Assert.Single(result);
         Assert.Equal(user1.UserId, result[0].UserId);
@@ -524,8 +448,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldFilterByUsernameCaseInsensitively()
     {
-        using var factory = new FileRepositoryFactory();
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "Alice",
@@ -534,8 +456,7 @@ public class CommentRepositoryTests
 
         await CreateCommentAsync(factory, user: user);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, "ALICE");
+        var result = await repository.GetCommentDetailsAsync(null, null, "ALICE");
 
         Assert.Single(result);
         Assert.Equal(user.UserId, result[0].UserId);
@@ -544,8 +465,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldCombineFilters()
     {
-        using var factory = new FileRepositoryFactory();
-
         var user1 = await factory.UserRepository.AddAsync(new User
         {
             Username = "alice",
@@ -562,8 +481,7 @@ public class CommentRepositoryTests
         await CreateCommentAsync(factory, user: user1, postId: 2);
         await CreateCommentAsync(factory, user: user2, postId: 1);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(1, user1.UserId, "alice");
+        var result = await repository.GetCommentDetailsAsync(1, user1.UserId, "alice");
 
         Assert.Single(result);
         Assert.Equal(user1.UserId, result[0].UserId);
@@ -573,12 +491,9 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldReturnEmptyList_WhenNoCommentsMatchFilters()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, postId: 1);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(999, null, null);
+        var result = await repository.GetCommentDetailsAsync(999, null, null);
 
         Assert.Empty(result);
     }
@@ -586,8 +501,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldOrderByTimestampAscending()
     {
-        using var factory = new FileRepositoryFactory();
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "alice",
@@ -609,8 +522,7 @@ public class CommentRepositoryTests
             user: user,
             timestamp: DateTimeOffset.UtcNow);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, null);
+        var result = await repository.GetCommentDetailsAsync(null, null, null);
 
         Assert.Equal(
             new[] { earlier.ContentId, middle.ContentId, later.ContentId },
@@ -620,8 +532,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldMapCommentProperties()
     {
-        using var factory = new FileRepositoryFactory();
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "alice",
@@ -639,8 +549,7 @@ public class CommentRepositoryTests
             parentCommentId: parentCommentId,
             timestamp: timestamp);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, null);
+        var result = await repository.GetCommentDetailsAsync(null, null, null);
 
         var dto = Assert.Single(result);
 
@@ -656,12 +565,9 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldMapNullParentCommentId()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateCommentAsync(factory, parentCommentId: null);
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, null);
+        var result = await repository.GetCommentDetailsAsync(null, null, null);
 
         var dto = Assert.Single(result);
 
@@ -671,8 +577,6 @@ public class CommentRepositoryTests
     [Fact]
     public async Task GetCommentDetailsAsync_ShouldIncludeReactionCounts()
     {
-        using var factory = new FileRepositoryFactory();
-
         var comment = await CreateCommentAsync(factory);
 
         var reactionTypes = Enum.GetValues<ReactionType>();
@@ -715,8 +619,7 @@ public class CommentRepositoryTests
             });
         }
 
-        var result = await factory.CommentRepository
-            .GetCommentDetailsAsync(null, null, null);
+        var result = await repository.GetCommentDetailsAsync(null, null, null);
 
         var dto = Assert.Single(result);
 

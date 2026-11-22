@@ -2,18 +2,30 @@ using RepositoryTests.Factories;
 using Xunit;
 using Entities;
 using Exceptions;
+using RepositoryContracts;
 
 namespace RepositoryTests.Contracts;
 
-public class UserRepositoryTests
+public class UserRepositoryTests : IDisposable
 {
+    private readonly IRepositoryFactory factory;
+    private readonly IUserRepository repository;
+
+    public UserRepositoryTests()
+    {
+        factory = new EfcRepositoryFactory();
+        repository = factory.UserRepository;
+    }
+
+    public void Dispose()
+    {
+        factory.Dispose();
+    }
+
     // CRUD
     [Fact]
     public async Task AddAsync_ShouldAssignId_AndAllowRetrieval()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = new User
         {
             Username = "testuser",
@@ -33,9 +45,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldAssignUniqueIds_ToMultipleUsers()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user1 = new User { Username = "user1", PasswordHash = "hash1" };
         var user2 = new User { Username = "user2", PasswordHash = "hash2" };
 
@@ -48,9 +57,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldStartIdAtOne_WhenRepositoryIsEmpty()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -63,9 +69,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenUserDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetSingleAsync(999));
     }
@@ -73,9 +76,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenIdIsZero()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetSingleAsync(0));
     }
@@ -83,9 +83,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenIdIsNegative()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetSingleAsync(-1));
     }
@@ -93,9 +90,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldReturnCorrectUser_WhenMultipleUsersExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User
         {
             Username = "user1",
@@ -124,9 +118,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnAllUsers()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "user1", PasswordHash = "hash1" });
         await repository.AddAsync(new User { Username = "user2", PasswordHash = "hash2" });
 
@@ -138,9 +129,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnEmptyList_WhenNoUsersExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var users = await repository.GetManyAsync();
 
         Assert.Empty(users);
@@ -149,9 +137,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldUpdateExistingUser()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "oldname",
@@ -172,9 +157,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldNotModifyOtherUsers()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user1 = await repository.AddAsync(new User
         {
             Username = "user1",
@@ -199,9 +181,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldThrow_WhenUserDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = new User
         {
             UserId = 999,
@@ -216,9 +195,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldPreserveUserId()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -239,9 +215,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldRemoveExistingUser()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -258,9 +231,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldNotDeleteOtherUsers()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user1 = await repository.AddAsync(new User
         {
             Username = "user1",
@@ -283,9 +253,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenUserDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.DeleteAsync(999));
     }
@@ -293,9 +260,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldMakeUserUnavailable()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -311,9 +275,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenDeletingSameUserTwice()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -330,9 +291,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UsernameExistsAsync_ShouldReturnTrue_WhenUsernameExists()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -347,9 +305,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UsernameExistsAsync_ShouldReturnFalse_WhenUsernameDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         bool exists = await repository.UsernameExistsAsync("unknown");
 
         Assert.False(exists);
@@ -358,9 +313,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UsernameExistsAsync_ShouldIgnoreCase()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User
         {
             Username = "TestUser",
@@ -375,9 +327,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task UsernameExistsAsync_ShouldReturnFalse_WhenRepositoryIsEmpty()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         bool exists = await repository.UsernameExistsAsync("testuser");
 
         Assert.False(exists);
@@ -386,9 +335,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUsersAsync_ShouldReturnAllUsers_WhenUsernameIsNull()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "user1", PasswordHash = "hash1" });
         await repository.AddAsync(new User { Username = "user2", PasswordHash = "hash2" });
 
@@ -400,9 +346,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUsersAsync_ShouldReturnAllUsers_WhenUsernameIsEmpty()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "user1", PasswordHash = "hash1" });
         await repository.AddAsync(new User { Username = "user2", PasswordHash = "hash2" });
 
@@ -414,9 +357,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUsersAsync_ShouldReturnAllUsers_WhenUsernameIsWhitespace()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "user1", PasswordHash = "hash1" });
         await repository.AddAsync(new User { Username = "user2", PasswordHash = "hash2" });
 
@@ -428,9 +368,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUsersAsync_ShouldFilterByUsername()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "testuser", PasswordHash = "hash1" });
         await repository.AddAsync(new User { Username = "anotheruser", PasswordHash = "hash2" });
         await repository.AddAsync(new User { Username = "mytestaccount", PasswordHash = "hash3" });
@@ -444,9 +381,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUsersAsync_ShouldIgnoreCase()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "TestUser", PasswordHash = "hash" });
 
         var users = await repository.GetUsersAsync("testuser");
@@ -458,9 +392,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUsersAsync_ShouldReturnEmptyList_WhenNoUsersMatch()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User { Username = "testuser", PasswordHash = "hash" });
 
         var users = await repository.GetUsersAsync("unknown");
@@ -471,9 +402,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUserByUsernameAsync_ShouldReturnUser_WhenUsernameExists()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.AddAsync(new User
         {
             Username = "testuser",
@@ -490,9 +418,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUserByUsernameAsync_ShouldReturnNull_WhenUsernameDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.GetUserByUsernameAsync("unknown");
 
         Assert.Null(user);
@@ -501,9 +426,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUserByUsernameAsync_ShouldIgnoreCase()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         await repository.AddAsync(new User
         {
             Username = "TestUser",
@@ -519,9 +441,6 @@ public class UserRepositoryTests
     [Fact]
     public async Task GetUserByUsernameAsync_ShouldReturnNull_WhenRepositoryIsEmpty()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.UserRepository;
-
         var user = await repository.GetUserByUsernameAsync("testuser");
 
         Assert.Null(user);

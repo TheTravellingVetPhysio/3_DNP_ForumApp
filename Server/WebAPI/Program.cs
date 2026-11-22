@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using EfcRepositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +22,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register repositories
-builder.Services.AddScoped<IUserRepository, UserFileRepository>();
-builder.Services.AddScoped<IPostRepository, PostFileRepository>();
-builder.Services.AddScoped<ICommentRepository, CommentFileRepository>();
-builder.Services.AddScoped<IReactionRepository, ReactionFileRepository>();
-builder.Services.AddScoped<ISubforumRepository, SubforumFileRepository>();
+
+builder.Services.AddScoped<IUserRepository, UserEfcRepository>();
+builder.Services.AddScoped<IPostRepository, PostEfcRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentEfcRepository>();
+builder.Services.AddScoped<IReactionRepository, ReactionEfcRepository>();
+builder.Services.AddScoped<ISubforumRepository, SubforumEfcRepository>();
+builder.Services.AddDbContext<ForumAppContext>();
 
 // Register secutiry services
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -72,6 +75,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+await ForumAppSeeder.SeedAsync(app.Services);
 
 app.UseExceptionHandler();
 

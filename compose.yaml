@@ -1,0 +1,15 @@
+services:
+  forumapp-db:
+    image: postgres:18
+    container_name: forumapp-db
+    environment:
+      POSTGRES_DB: forumapp
+      POSTGRES_USER: forumapp
+      POSTGRES_PASSWORD: forumapp_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - forumapp-data:/var/lib/postgresql
+
+volumes:
+  forumapp-data:

@@ -1,17 +1,32 @@
+namespace RepositoryTests.Contracts;
+
 using ApiContracts;
 using Entities;
 using Exceptions;
+using RepositoryContracts;
 using RepositoryTests.Factories;
 using Xunit;
 
-namespace RepositoryTests.Contracts;
-
-public class PostRepositoryTests
+public class PostRepositoryTests : IDisposable
 {
+    private readonly IRepositoryFactory factory;
+    private readonly IPostRepository repository;
+
+    public PostRepositoryTests()
+    {
+        factory = new EfcRepositoryFactory();
+        repository = factory.PostRepository;
+    }
+
+    public void Dispose()
+    {
+        factory.Dispose();
+    }
+
     // Helper
 
     private static async Task<Post> CreatePostAsync(
-        FileRepositoryFactory factory,
+        IRepositoryFactory factory,
         string title = "Test title",
         string body = "Test body",
         User? user = null,
@@ -43,9 +58,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldAssignId_AndAllowRetrieval()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
 
         Assert.True(post.ContentId > 0);
@@ -61,9 +73,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldAssignUniqueIds_ToMultiplePosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post1 = await CreatePostAsync(factory, "Post 1");
         var post2 = await CreatePostAsync(factory, "Post 2");
 
@@ -73,9 +82,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldStartIdAtOne_WhenRepositoryIsEmpty()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
 
         Assert.Equal(1, post.ContentId);
@@ -84,9 +90,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenPostDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetSingleAsync(999));
     }
@@ -94,9 +97,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenIdIsZero()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetSingleAsync(0));
     }
@@ -104,9 +104,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenIdIsNegative()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetSingleAsync(-1));
     }
@@ -114,9 +111,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldReturnCorrectPost_WhenMultiplePostsExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await CreatePostAsync(factory, "Post 1", "Body 1");
 
         var post2 = await CreatePostAsync(factory, "Post 2", "Body 2");
@@ -133,9 +127,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnAllPosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await CreatePostAsync(factory, "Post 1");
         await CreatePostAsync(factory, "Post 2");
 
@@ -147,9 +138,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnEmptyList_WhenNoPostsExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var posts = await repository.GetManyAsync();
 
         Assert.Empty(posts);
@@ -158,9 +146,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldUpdateExistingPost()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory, "Old title", "Old body");
 
         post.Title = "New title";
@@ -177,9 +162,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldNotModifyOtherPosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post1 = await CreatePostAsync(factory, "Post 1", "Body 1");
         var post2 = await CreatePostAsync(factory, "Post 2", "Body 2");
 
@@ -195,9 +177,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldThrow_WhenPostDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = new Post
         {
             ContentId = 999,
@@ -214,9 +193,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldPreservePostId()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
         int originalId = post.ContentId;
 
@@ -232,9 +208,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldRemoveExistingPost()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
 
         await repository.DeleteAsync(post.ContentId);
@@ -247,9 +220,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldNotDeleteOtherPosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post1 = await CreatePostAsync(factory, "Post 1");
         var post2 = await CreatePostAsync(factory, "Post 2");
 
@@ -263,9 +233,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenPostDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.DeleteAsync(999));
     }
@@ -273,9 +240,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldMakePostUnavailable()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
 
         await repository.DeleteAsync(post.ContentId);
@@ -287,9 +251,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenDeletingSamePostTwice()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
 
         await repository.DeleteAsync(post.ContentId);
@@ -303,9 +264,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostCountByUserAsync_ShouldReturnCorrectCount()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -323,9 +281,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostCountByUserAsync_ShouldReturnZero_WhenUserHasNoPosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -340,9 +295,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostCountByUserAsync_ShouldNotCountOtherUsersPosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user1 = await factory.UserRepository.AddAsync(new User
         {
             Username = "user1",
@@ -366,9 +318,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostCountBySubforumAsync_ShouldReturnCorrectCount()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -392,9 +341,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostCountBySubforumAsync_ShouldReturnZero_WhenSubforumHasNoPosts()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -415,9 +361,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostCountBySubforumAsync_ShouldNotCountPostsFromOtherSubforums()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -449,9 +392,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldReturnAllPosts_WhenNoFiltersAreProvided()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await CreatePostAsync(factory, "Post 1");
         await CreatePostAsync(factory, "Post 2");
 
@@ -464,9 +404,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldReturnEmptyList_WhenNoPostsExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var posts = await repository.GetPostsOverviewAsync(
             null, null, null, null);
 
@@ -476,9 +413,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldFilterByTitle()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await CreatePostAsync(factory, "Java programming");
         await CreatePostAsync(factory, "CSharp programming");
         await CreatePostAsync(factory, "Java testing");
@@ -494,9 +428,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldIgnoreCase_WhenFilteringByTitle()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await CreatePostAsync(factory, "Java programming");
 
         var posts = await repository.GetPostsOverviewAsync(
@@ -508,9 +439,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldFilterByUserId()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -530,9 +458,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldFilterByUsername()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "anotheruser",
@@ -552,9 +477,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldIgnoreCase_WhenFilteringByUsername()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "TestUser",
@@ -573,9 +495,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldFilterBySubforumId()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -601,9 +520,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldReturnEmptyList_WhenNoPostsMatch()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await CreatePostAsync(factory, "Java programming");
 
         var posts = await repository.GetPostsOverviewAsync(
@@ -615,9 +531,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldApplyMultipleFiltersTogether()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -645,9 +558,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldOrderByLastActivityDescending()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "commentuser",
@@ -675,9 +585,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostsOverviewAsync_ShouldIncludeCorrectUserInformation()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var user = await factory.UserRepository.AddAsync(new User
         {
             Username = "testuser",
@@ -703,9 +610,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostDetailsAsync_ShouldReturnPostDetails()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory, "Test title", "Test body");
 
         var user = await factory.UserRepository.GetSingleAsync(post.UserId);
@@ -725,9 +629,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostDetailsAsync_ShouldReturnComments()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         var post = await CreatePostAsync(factory);
 
         var commentUser = await factory.UserRepository.AddAsync(new User
@@ -752,9 +653,6 @@ public class PostRepositoryTests
     [Fact]
     public async Task GetPostDetailsAsync_ShouldThrow_WhenPostDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-        var repository = factory.PostRepository;
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
             () => repository.GetPostDetailsAsync(999));
     }

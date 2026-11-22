@@ -1,21 +1,48 @@
 namespace RepositoryTests.Contracts;
 
 using Entities;
-using FileRepositories;
+using RepositoryContracts;
 using RepositoryTests.Factories;
 using Xunit;
 using ApiContracts;
 using Exceptions;
 
-public class ReactionRepositoryTests
+public class ReactionRepositoryTests : IDisposable
 {
+    private readonly IRepositoryFactory factory;
+    private readonly IReactionRepository repository;
+
+    public ReactionRepositoryTests()
+    {
+        factory = new EfcRepositoryFactory();
+        repository = factory.ReactionRepository;
+    }
+
+    public void Dispose()
+    {
+        factory.Dispose();
+    }
+
     private static async Task<Reaction> CreateReactionAsync(
-        FileRepositoryFactory factory,
+        IRepositoryFactory factory,
         int userId = 1,
         int contentId = 1,
         ContentType contentType = ContentType.Post,
         ReactionType? reactionType = null)
     {
+        // Sørger for, at brugeren eksisterer.
+        var users = await factory.UserRepository.GetManyAsync();
+
+        if (!users.Any(u => u.UserId == userId))
+        {
+            await factory.UserRepository.AddAsync(new User
+            {
+                UserId = userId,
+                Username = $"user_{Guid.NewGuid():N}",
+                PasswordHash = "testhash"
+            });
+        }
+
         reactionType ??= Enum.GetValues<ReactionType>().First();
 
         return await factory.ReactionRepository.AddAsync(new Reaction
@@ -27,15 +54,11 @@ public class ReactionRepositoryTests
         });
     }
 
-    // --------------------------------------------------
     // CRUD
-    // --------------------------------------------------
 
     [Fact]
     public async Task AddAsync_ShouldAssignId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(factory);
 
         Assert.True(reaction.ReactionId > 0);
@@ -44,8 +67,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldAssignUniqueIds()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction1 = await CreateReactionAsync(factory);
         var reaction2 = await CreateReactionAsync(factory);
 
@@ -55,8 +76,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task AddAsync_ShouldStartIdsAtOne()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(factory);
 
         Assert.Equal(1, reaction.ReactionId);
@@ -65,12 +84,9 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldReturnReaction()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(factory);
 
-        var result = await factory.ReactionRepository
-            .GetSingleAsync(reaction.ReactionId);
+        var result = await repository.GetSingleAsync(reaction.ReactionId);
 
         Assert.Equal(reaction.ReactionId, result.ReactionId);
         Assert.Equal(reaction.UserId, result.UserId);
@@ -82,22 +98,18 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetSingleAsync_ShouldThrow_WhenReactionDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.ReactionRepository.GetSingleAsync(999));
+            () => repository.GetSingleAsync(999));
     }
 
     [Fact]
     public async Task GetManyAsync_ShouldReturnAllReactions()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateReactionAsync(factory);
         await CreateReactionAsync(factory, userId: 2);
         await CreateReactionAsync(factory, userId: 3);
 
-        var result = await factory.ReactionRepository.GetManyAsync();
+        var result = await repository.GetManyAsync();
 
         Assert.Equal(3, result.Count);
     }
@@ -105,9 +117,7 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetManyAsync_ShouldReturnEmptyList_WhenNoReactionsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.ReactionRepository.GetManyAsync();
+        var result = await repository.GetManyAsync();
 
         Assert.Empty(result);
     }
@@ -115,8 +125,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldUpdateReaction()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reactionTypes = Enum.GetValues<ReactionType>();
 
         var reaction = await CreateReactionAsync(
@@ -125,10 +133,9 @@ public class ReactionRepositoryTests
 
         reaction.ReactionType = reactionTypes[1];
 
-        await factory.ReactionRepository.UpdateAsync(reaction);
+        await repository.UpdateAsync(reaction);
 
-        var result = await factory.ReactionRepository
-            .GetSingleAsync(reaction.ReactionId);
+        var result = await repository.GetSingleAsync(reaction.ReactionId);
 
         Assert.Equal(reactionTypes[1], result.ReactionType);
     }
@@ -136,17 +143,14 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldPreserveId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(factory);
         int originalId = reaction.ReactionId;
 
         reaction.ContentId = 2;
 
-        await factory.ReactionRepository.UpdateAsync(reaction);
+        await repository.UpdateAsync(reaction);
 
-        var result = await factory.ReactionRepository
-            .GetSingleAsync(originalId);
+        var result = await repository.GetSingleAsync(originalId);
 
         Assert.Equal(originalId, result.ReactionId);
     }
@@ -154,17 +158,14 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldNotAffectOtherReactions()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction1 = await CreateReactionAsync(factory, contentId: 1);
         var reaction2 = await CreateReactionAsync(factory, contentId: 2);
 
         reaction1.ContentId = 3;
 
-        await factory.ReactionRepository.UpdateAsync(reaction1);
+        await repository.UpdateAsync(reaction1);
 
-        var result = await factory.ReactionRepository
-            .GetSingleAsync(reaction2.ReactionId);
+        var result = await repository.GetSingleAsync(reaction2.ReactionId);
 
         Assert.Equal(2, result.ContentId);
     }
@@ -172,8 +173,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task UpdateAsync_ShouldThrow_WhenReactionDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = new Reaction
         {
             ReactionId = 999,
@@ -184,34 +183,29 @@ public class ReactionRepositoryTests
         };
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.ReactionRepository.UpdateAsync(reaction));
+            () => repository.UpdateAsync(reaction));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldMakeReactionUnavailable()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(factory);
 
-        await factory.ReactionRepository.DeleteAsync(reaction.ReactionId);
+        await repository.DeleteAsync(reaction.ReactionId);
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.ReactionRepository.GetSingleAsync(reaction.ReactionId));
+            () => repository.GetSingleAsync(reaction.ReactionId));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldNotDeleteOtherReactions()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction1 = await CreateReactionAsync(factory, userId: 1);
         var reaction2 = await CreateReactionAsync(factory, userId: 2);
 
-        await factory.ReactionRepository.DeleteAsync(reaction1.ReactionId);
+        await repository.DeleteAsync(reaction1.ReactionId);
 
-        var result = await factory.ReactionRepository
-            .GetSingleAsync(reaction2.ReactionId);
+        var result = await repository.GetSingleAsync(reaction2.ReactionId);
 
         Assert.Equal(reaction2.ReactionId, result.ReactionId);
     }
@@ -219,43 +213,34 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenReactionDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.ReactionRepository.DeleteAsync(999));
+            () => repository.DeleteAsync(999));
     }
 
     [Fact]
     public async Task DeleteAsync_ShouldThrow_WhenDeletingSameReactionTwice()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(factory);
 
-        await factory.ReactionRepository.DeleteAsync(reaction.ReactionId);
+        await repository.DeleteAsync(reaction.ReactionId);
 
         await Assert.ThrowsAsync<ResourceNotFoundException>(
-            () => factory.ReactionRepository.DeleteAsync(reaction.ReactionId));
+            () => repository.DeleteAsync(reaction.ReactionId));
     }
 
-    // --------------------------------------------------
     // GetReactionByUserAndContentAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetReactionByUserAndContentAsync_ShouldReturnMatchingReaction()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reaction = await CreateReactionAsync(
             factory,
             userId: 1,
             contentId: 10,
             contentType: ContentType.Post);
 
-        var result = await factory.ReactionRepository
-            .GetReactionByUserAndContentAsync(
-                1, 10, ContentType.Post);
+        var result = await repository.GetReactionByUserAndContentAsync(
+            1, 10, ContentType.Post);
 
         Assert.NotNull(result);
         Assert.Equal(reaction.ReactionId, result.ReactionId);
@@ -264,11 +249,8 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionByUserAndContentAsync_ShouldReturnNull_WhenReactionDoesNotExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.ReactionRepository
-            .GetReactionByUserAndContentAsync(
-                1, 10, ContentType.Post);
+        var result = await repository.GetReactionByUserAndContentAsync(
+            1, 10, ContentType.Post);
 
         Assert.Null(result);
     }
@@ -276,16 +258,13 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionByUserAndContentAsync_ShouldMatchUserId()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateReactionAsync(
             factory,
             userId: 1,
             contentId: 10);
 
-        var result = await factory.ReactionRepository
-            .GetReactionByUserAndContentAsync(
-                2, 10, ContentType.Post);
+        var result = await repository.GetReactionByUserAndContentAsync(
+            2, 10, ContentType.Post);
 
         Assert.Null(result);
     }
@@ -293,16 +272,13 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionByUserAndContentAsync_ShouldMatchContentId()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateReactionAsync(
             factory,
             userId: 1,
             contentId: 10);
 
-        var result = await factory.ReactionRepository
-            .GetReactionByUserAndContentAsync(
-                1, 20, ContentType.Post);
+        var result = await repository.GetReactionByUserAndContentAsync(
+            1, 20, ContentType.Post);
 
         Assert.Null(result);
     }
@@ -310,32 +286,25 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionByUserAndContentAsync_ShouldMatchContentType()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateReactionAsync(
             factory,
             userId: 1,
             contentId: 10,
             contentType: ContentType.Post);
 
-        var result = await factory.ReactionRepository
-            .GetReactionByUserAndContentAsync(
-                1, 10, ContentType.Comment);
+        var result = await repository.GetReactionByUserAndContentAsync(
+            1, 10, ContentType.Comment);
 
         Assert.Null(result);
     }
 
-    // --------------------------------------------------
     // GetReactionCountsAsync
-    // --------------------------------------------------
 
     [Fact]
     public async Task GetReactionCountsAsync_ShouldReturnEmptyDictionary_WhenNoReactionsExist()
     {
-        using var factory = new FileRepositoryFactory();
-
-        var result = await factory.ReactionRepository
-            .GetReactionCountsAsync(1, ContentType.Post);
+        var result = await repository.GetReactionCountsAsync(
+            1, ContentType.Post);
 
         Assert.Empty(result);
     }
@@ -343,8 +312,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionCountsAsync_ShouldCountReactionsByType()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reactionTypes = Enum.GetValues<ReactionType>();
 
         // Two reactions of the first type
@@ -364,8 +331,8 @@ public class ReactionRepositoryTests
         await CreateReactionAsync(factory, userId: 5,
             reactionType: reactionTypes[1]);
 
-        var result = await factory.ReactionRepository
-            .GetReactionCountsAsync(1, ContentType.Post);
+        var result = await repository.GetReactionCountsAsync(
+            1, ContentType.Post);
 
         Assert.Equal(2, result[reactionTypes[0]]);
         Assert.Equal(3, result[reactionTypes[1]]);
@@ -374,8 +341,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionCountsAsync_ShouldOnlyCountReactionsForSpecifiedContentId()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reactionTypes = Enum.GetValues<ReactionType>();
 
         await CreateReactionAsync(factory,
@@ -393,8 +358,8 @@ public class ReactionRepositoryTests
             contentId: 2,
             reactionType: reactionTypes[0]);
 
-        var result = await factory.ReactionRepository
-            .GetReactionCountsAsync(1, ContentType.Post);
+        var result = await repository.GetReactionCountsAsync(
+            1, ContentType.Post);
 
         Assert.Equal(2, result[reactionTypes[0]]);
     }
@@ -402,8 +367,6 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionCountsAsync_ShouldOnlyCountReactionsForSpecifiedContentType()
     {
-        using var factory = new FileRepositoryFactory();
-
         var reactionType = Enum.GetValues<ReactionType>().First();
 
         await CreateReactionAsync(factory,
@@ -418,8 +381,8 @@ public class ReactionRepositoryTests
             contentType: ContentType.Comment,
             reactionType: reactionType);
 
-        var result = await factory.ReactionRepository
-            .GetReactionCountsAsync(1, ContentType.Post);
+        var result = await repository.GetReactionCountsAsync(
+            1, ContentType.Post);
 
         Assert.Equal(1, result[reactionType]);
     }
@@ -427,14 +390,12 @@ public class ReactionRepositoryTests
     [Fact]
     public async Task GetReactionCountsAsync_ShouldReturnEmptyDictionary_WhenOnlyOtherContentHasReactions()
     {
-        using var factory = new FileRepositoryFactory();
-
         await CreateReactionAsync(factory,
             contentId: 2,
             contentType: ContentType.Post);
 
-        var result = await factory.ReactionRepository
-            .GetReactionCountsAsync(1, ContentType.Post);
+        var result = await repository.GetReactionCountsAsync(
+            1, ContentType.Post);
 
         Assert.Empty(result);
     }
