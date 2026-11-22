@@ -13,4 +13,8 @@ public interface IReactionRepository : IRepository<Reaction>
     Task<Dictionary<ReactionType, int>> GetReactionCountsAsync(
         int contentId,
         ContentType contentType);
+
+    Task<Dictionary<int, Dictionary<ReactionType, int>>> GetReactionCountsByContentIdsAsync(
+        List<int> contentIds, 
+        ContentType contentType);
 }

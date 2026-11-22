@@ -11,9 +11,21 @@ public class ForumAppContext : DbContext
     public DbSet<Reaction> Reactions => Set<Reaction>();
     public DbSet<Subforum> Subforums => Set<Subforum>();
 
+    public ForumAppContext()
+    {
+    }
+
+    public ForumAppContext(DbContextOptions<ForumAppContext> options)
+        : base(options)
+    {
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlite("Data Source=app.db");
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlite("Data Source=app.db");
+        }
     }
 
     /*

@@ -22,6 +22,8 @@
     <ProjectReference Include="..\..\Server\Entities\Entities.csproj" />
     <ProjectReference Include="..\..\Server\RepositoryContracts\RepositoryContracts.csproj" />
     <ProjectReference Include="..\..\Server\FileRepositories\FileRepositories.csproj" />
+    <ProjectReference Include="..\..\Server\EfcRepositories\EfcRepositories.csproj" />
   </ItemGroup>
+
 
 </Project>

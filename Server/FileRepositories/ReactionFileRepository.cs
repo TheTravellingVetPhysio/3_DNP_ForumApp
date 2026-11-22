@@ -39,4 +39,9 @@ public class ReactionFileRepository : FileRepository<Reaction>, IReactionReposit
             .GroupBy(r => r.ReactionType)
             .ToDictionary(g => g.Key, g => g.Count());
     }
+
+    public Task<Dictionary<int, Dictionary<ReactionType, int>>> GetReactionCountsByContentIdsAsync(List<int> contentIds, ContentType contentType)
+    {
+        throw new NotImplementedException();
+    }
 }
